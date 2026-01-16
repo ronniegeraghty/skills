@@ -134,7 +134,7 @@ This means you can run scripts individually and they'll find the data from previ
 ### Release-Based MCP Adoption
 - **Overall adoption rate**: What % of releases had MCP tool usage
 - **By Language**: Adoption rates per SDK language with charts
-- **By Version Type**: GA, Beta, and Patch release adoption
+- **By Version Type**: GA (Stable) and Beta release adoption
 - **Release Details**: List of specific packages with MCP usage
 
 ### Client Adoption
@@ -151,7 +151,7 @@ This means you can run scripts individually and they'll find the data from previ
 ### Package Correlation
 - Packages with both MCP usage and recent releases
 - Language breakdown
-- Release version types (GA, Beta, Patch)
+- Release version types (GA, Beta)
 
 ### Insights & Recommendations
 - Key findings
@@ -163,7 +163,7 @@ This means you can run scripts individually and they'll find the data from previ
 The report includes embedded charts via [QuickChart.io](https://quickchart.io):
 
 - **Release Adoption by Language** - Stacked bar chart showing with/without MCP usage
-- **Version Type Adoption** - Bar chart of adoption rates by release type (Beta/GA/Patch)
+- **Version Type Adoption** - Bar chart of adoption rates by release type (Beta/GA)
 - **Client Distribution** - Pie chart of MCP client usage
 - **Tool Usage** - Horizontal bar chart of top tools with success rate indicators
 
