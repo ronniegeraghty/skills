@@ -230,7 +230,7 @@ function generateReleaseAdoptionSection(report) {
 
   let md = `## Release-Based MCP Adoption
 
-This section shows what percentage of SDK packages released in the tracked months had MCP tool usage during their development (in the prior 3 months of telemetry data).
+This section shows what percentage of SDK packages released in the tracked months had MCP tool usage during their development (in the prior 2 months of telemetry data).
 
 ### Overall Adoption
 

@@ -107,8 +107,8 @@ Options:
   
   All other arguments are passed through to the individual scripts:
   
-  --start YYYY-MM-DD      Start date for telemetry (default: 30 days ago)
-  --end YYYY-MM-DD        End date for telemetry (default: today)
+  --start YYYY-MM-DD      Start date for telemetry (default: 2 months before release cycle end)
+  --end YYYY-MM-DD        End date for telemetry (default: end of 16th of current month)
   --month YYYY-MM         Month(s) for release data (can specify multiple)
   --language js,python    Languages to include (default: all)
 

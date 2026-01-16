@@ -242,7 +242,7 @@ function analyzeClientAdoption(telemetryData) {
 
 /**
  * Calculate release-based adoption: For each released package,
- * check if it had MCP tool usage in the telemetry period (prior 3 months)
+ * check if it had MCP tool usage in the telemetry period (prior 2 months)
  * 
  * Note: Patch releases are excluded from adoption metrics as they typically
  * don't involve significant development work that would use MCP tools.

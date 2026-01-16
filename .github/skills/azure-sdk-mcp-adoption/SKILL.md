@@ -35,7 +35,7 @@ Use this skill when:
 
 ## Quick Start
 
-Generate a complete adoption report with default settings (last 30 days):
+Generate a complete adoption report with default settings (2 months back from the current release cycle, ending on the 16th):
 
 ```bash
 cd .github/skills/azure-sdk-mcp-adoption
@@ -72,8 +72,8 @@ pnpm fetch:telemetry -- --start 2025-12-01 --end 2026-01-17
 ```
 
 **Options:**
-- `--start YYYY-MM-DD` - Start date for telemetry query (default: 30 days ago)
-- `--end YYYY-MM-DD` - End date for telemetry query (default: today)
+- `--start YYYY-MM-DD` - Start date for telemetry query (default: 2 months before release cycle end)
+- `--end YYYY-MM-DD` - End date for telemetry query (default: end of 16th of current month)
 
 **Outputs:** `output/{timestamp}/telemetry.json`
 

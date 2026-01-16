@@ -12,6 +12,23 @@ const CLUSTER_URI = "https://ddazureclients.kusto.windows.net";
 const DATABASE = "AzSdkToolsMcp";
 
 /**
+ * Calculate the release cycle end date for a given month.
+ * Azure SDK releases on the 16th of each month, so the telemetry end date
+ * should be the end of the 16th (i.e., 17th exclusive).
+ * 
+ * @param {Date} date - A date within the target release month
+ * @returns {string} - The release cycle end date (YYYY-MM-DD)
+ */
+function getReleaseCycleEndDate(date) {
+  // Release cycle ends at the end of the 16th (so we use the 17th as exclusive end)
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  // Create date for the 17th of the month (end of day on the 16th)
+  const endDate = new Date(year, month, 17);
+  return endDate.toISOString().split("T")[0];
+}
+
+/**
  * Parse command line arguments
  * @returns {{ startDate: string, endDate: string }}
  */
@@ -28,14 +45,18 @@ function parseArgs() {
     }
   }
 
-  // Default to last 30 days if not specified
-  if (!startDate) {
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
-    startDate = d.toISOString().split("T")[0];
-  }
+  // Default: Use release cycle dates if not specified
+  // End date: End of release cycle (end of the 16th) for the current month
+  // Start date: 2 months back from the release cycle end date
   if (!endDate) {
-    endDate = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    endDate = getReleaseCycleEndDate(now);
+  }
+  if (!startDate) {
+    // Parse the end date and go back 2 months
+    const end = new Date(endDate);
+    const twoMonthsAgo = new Date(end.getFullYear(), end.getMonth() - 2, end.getDate());
+    startDate = twoMonthsAgo.toISOString().split("T")[0];
   }
 
   return { startDate, endDate };
