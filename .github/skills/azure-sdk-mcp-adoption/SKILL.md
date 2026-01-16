@@ -40,10 +40,28 @@ Generate a complete adoption report with default settings (last 30 days):
 ```bash
 cd .github/skills/azure-sdk-mcp-adoption
 pnpm install
-pnpm all
+node src/run.js
 ```
 
 Each run creates a timestamped output folder (e.g., `output/2026-01-16T13-19-41/`) to preserve historical reports.
+
+### Run Script Options
+
+```bash
+# Run with custom date range
+node src/run.js --start 2025-12-01 --end 2026-01-17
+
+# Run with specific release months
+node src/run.js --month 2025-12 --month 2026-01
+
+# Run only specific steps
+node src/run.js --step correlate --step report
+
+# Show help
+node src/run.js --help
+```
+
+Available steps: `fetch-telemetry`, `fetch-releases`, `correlate`, `report`
 
 ## Individual Commands
 
@@ -188,6 +206,7 @@ azure-sdk-mcp-adoption/
 ├── SKILL.md           # This file - skill instructions
 ├── package.json       # Dependencies and scripts
 ├── src/
+│   ├── run.js               # Unified runner script (invokes all steps)
 │   ├── fetch-telemetry.js   # Query Kusto for MCP tool events
 │   ├── fetch-releases.js    # Fetch releases from GitHub
 │   ├── correlate.js         # Match telemetry with releases
