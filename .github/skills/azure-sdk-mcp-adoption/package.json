@@ -1,0 +1,29 @@
+{
+  "name": "@skills/azure-sdk-mcp-adoption",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Copilot agent skill that correlates Azure SDK MCP tool usage with monthly Azure SDK releases",
+  "type": "module",
+  "scripts": {
+    "fetch:telemetry": "node src/fetch-telemetry.js",
+    "fetch:releases": "node src/fetch-releases.js",
+    "correlate": "node src/correlate.js",
+    "report": "node src/report.js",
+    "all": "npm run fetch:telemetry && npm run fetch:releases && npm run correlate && npm run report",
+    "test": "node --test"
+  },
+  "keywords": [
+    "azure-sdk",
+    "mcp",
+    "telemetry",
+    "adoption"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@azure/identity": "^4.0.0",
+    "azure-kusto-data": "^6.0.0",
+    "js-yaml": "^4.1.0",
+    "quickchart-js": "^3.1.3"
+  }
+}

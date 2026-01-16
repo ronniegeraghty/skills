@@ -1,0 +1,12 @@
+{
+  "name": "ai-skills",
+  "private": true,
+  "description": "A collection of GitHub Copilot Agent Skills for various AI workflows",
+  "scripts": {
+    "lint": "eslint .github/skills/*/src",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  }
+}
