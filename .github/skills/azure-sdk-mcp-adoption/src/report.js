@@ -201,6 +201,9 @@ function generateVersionTypeChart(versionTypeAdoption) {
 function generateExecutiveSummary(report) {
   const { summary, metadata, releaseAdoption } = report;
   
+  // Use releaseAdoption.totalReleases which excludes Patch releases
+  const totalReleases = releaseAdoption?.totalReleases || summary.totalReleases;
+  
   return `## Executive Summary
 
 | Metric | Value |
@@ -210,7 +213,7 @@ function generateExecutiveSummary(report) {
 | **Total MCP Tool Calls** | ${formatNumber(summary.totalToolCalls)} |
 | **Unique Tools Used** | ${summary.uniqueTools} |
 | **Unique MCP Clients** | ${summary.uniqueClients} |
-| **Total SDK Releases** | ${summary.totalReleases} |
+| **Total SDK Releases** | ${totalReleases} |
 | **Releases with MCP Usage** | ${releaseAdoption?.releasesWithUsage || 0} (${releaseAdoption?.adoptionRate || 0}%) |
 
 `;

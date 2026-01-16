@@ -244,12 +244,21 @@ function analyzeClientAdoption(telemetryData) {
  * Calculate release-based adoption: For each released package,
  * check if it had MCP tool usage in the telemetry period (prior 3 months)
  * 
+ * Note: Patch releases are excluded from adoption metrics as they typically
+ * don't involve significant development work that would use MCP tools.
+ * 
  * @param {object[]} releases - Monthly releases
  * @param {object[]} packageUsage - Package usage from telemetry
  * @param {object[]} dailyUsage - Daily usage data for tool breakdown
  * @returns {object}
  */
 function calculateReleaseBasedAdoption(releases, packageUsage, dailyUsage) {
+  // Filter out Patch releases - only track GA and Beta
+  const filteredReleases = releases.filter(r => {
+    const versionType = r.VersionType || "";
+    return versionType !== "Patch";
+  });
+
   // Build a lookup of packages with MCP usage
   const packagesWithUsage = new Map();
   for (const pkg of packageUsage) {
@@ -277,12 +286,12 @@ function calculateReleaseBasedAdoption(releases, packageUsage, dailyUsage) {
     }
   }
 
-  // Analyze each release
+  // Analyze each release (excluding Patch releases)
   const releaseDetails = [];
   const byLanguage = {};
   const byVersionType = {};
 
-  for (const release of releases) {
+  for (const release of filteredReleases) {
     const packageName = release.Name || release.Package;
     const normalized = normalizePackageName(packageName);
     const serviceName = extractServiceName(packageName);
@@ -331,9 +340,9 @@ function calculateReleaseBasedAdoption(releases, packageUsage, dailyUsage) {
     }
   }
 
-  // Calculate overall stats
+  // Calculate overall stats (using filtered releases - excludes Patch)
   const releasesWithUsage = releaseDetails.filter(r => r.hadMcpUsage).length;
-  const totalReleases = releases.length;
+  const totalReleases = filteredReleases.length;
   const adoptionRate = totalReleases > 0 
     ? Math.round((releasesWithUsage / totalReleases) * 10000) / 100 
     : 0;
