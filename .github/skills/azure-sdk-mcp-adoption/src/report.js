@@ -1,25 +1,17 @@
 /**
- * Generate a markdown report from correlation data with charts
- * 
- * This script reads the correlation.json and produces a formatted
- * markdown report with embedded charts.
+ * Generate a markdown report from correlation data
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 import QuickChart from "quickchart-js";
-import { getOutputDir, writeOutput, formatDate, formatNumber, findOutputDirWithFiles } from "./utils.js";
+import { getOutputDir, writeOutput, findOutputDirWithFiles } from "./utils.js";
 
-// Chart configuration
 const CHART_WIDTH = 600;
 const CHART_HEIGHT = 400;
 
-let OUTPUT_DIR = null;
-
 /**
- * Generate a chart URL using QuickChart
- * @param {object} config - Chart.js configuration
- * @returns {string} - Chart URL
+ * Generate a chart URL
  */
 function getChartUrl(config) {
   const chart = new QuickChart();
@@ -31,407 +23,252 @@ function getChartUrl(config) {
 }
 
 /**
- * Get markdown for a chart
- * @param {string} altText 
- * @param {object} config 
- * @returns {string} - Markdown image reference
+ * Format a number with commas
  */
-function getChartMarkdown(altText, config) {
-  const url = getChartUrl(config);
-  return `![${altText}](${url})`;
+function formatNumber(n) {
+  return n?.toLocaleString() || "0";
 }
 
 /**
- * Generate release adoption chart
- * @param {object} releaseAdoption 
- * @returns {string}
+ * Generate the adoption by language chart
  */
-function generateReleaseAdoptionChart(releaseAdoption) {
-  const languages = releaseAdoption.languageAdoption.slice(0, 8);
-  
+function generateLanguageChart(byLanguage) {
   const config = {
     type: "bar",
     data: {
-      labels: languages.map(l => l.language),
+      labels: byLanguage.map(l => l.language.toUpperCase()),
       datasets: [
         {
           label: "With MCP Usage",
-          data: languages.map(l => l.releasesWithMcp),
-          backgroundColor: "rgba(54, 162, 235, 0.8)"
+          data: byLanguage.map(l => l.withMcp),
+          backgroundColor: "rgba(54, 162, 235, 0.9)"
         },
         {
-          label: "Without MCP Usage",
-          data: languages.map(l => l.totalReleases - l.releasesWithMcp),
-          backgroundColor: "rgba(201, 203, 207, 0.8)"
+          label: "Total Releases",
+          data: byLanguage.map(l => l.total),
+          backgroundColor: "rgba(201, 203, 207, 0.9)"
         }
       ]
     },
     options: {
       plugins: {
-        title: {
+        title: { display: true, text: "MCP Adoption by Language" },
+        datalabels: {
           display: true,
-          text: "Release MCP Adoption by Language"
+          anchor: "end",
+          align: "top",
+          color: "#333",
+          font: { weight: "bold" }
         }
       },
       scales: {
-        x: { stacked: true },
-        y: { stacked: true, beginAtZero: true }
+        y: { beginAtZero: true }
       }
     }
   };
-
-  return getChartMarkdown("Release Adoption by Language", config);
+  return `![MCP Adoption by Language](${getChartUrl(config)})`;
 }
 
 /**
- * Generate tool usage chart
- * @param {object} toolAnalysis 
- * @returns {string}
+ * Generate the adoption by version type chart
  */
-function generateToolUsageChart(toolAnalysis) {
-  const tools = Object.values(toolAnalysis)
-    .sort((a, b) => b.totalCalls - a.totalCalls)
-    .slice(0, 10);
-  
-  const config = {
-    type: "horizontalBar",
-    data: {
-      labels: tools.map(t => t.name.replace("azsdk_", "")),
-      datasets: [{
-        label: "Total Calls",
-        data: tools.map(t => t.totalCalls),
-        backgroundColor: tools.map(t => {
-          if (t.successRate >= 90) return "rgba(75, 192, 92, 0.8)";
-          if (t.successRate >= 70) return "rgba(255, 205, 86, 0.8)";
-          return "rgba(255, 99, 132, 0.8)";
-        })
-      }]
-    },
-    options: {
-      plugins: {
-        title: {
-          display: true,
-          text: "Top 10 MCP Tools (green=90%+, yellow=70%+, red=<70% success)"
-        },
-        legend: { display: false }
-      },
-      scales: {
-        xAxes: [{ ticks: { beginAtZero: true } }]
-      }
-    }
-  };
-
-  return getChartMarkdown("Tool Usage Chart", config);
-}
-
-/**
- * Generate client distribution chart
- * @param {object} clientAnalysis 
- * @returns {string}
- */
-function generateClientChart(clientAnalysis) {
-  const clients = Object.values(clientAnalysis)
-    .sort((a, b) => b.totalCalls - a.totalCalls);
-  
-  const config = {
-    type: "pie",
-    data: {
-      labels: clients.map(c => c.name),
-      datasets: [{
-        data: clients.map(c => c.totalCalls),
-        backgroundColor: [
-          "rgba(54, 162, 235, 0.8)",
-          "rgba(255, 99, 132, 0.8)",
-          "rgba(255, 205, 86, 0.8)",
-          "rgba(75, 192, 192, 0.8)",
-          "rgba(153, 102, 255, 0.8)",
-          "rgba(255, 159, 64, 0.8)"
-        ]
-      }]
-    },
-    options: {
-      plugins: {
-        title: {
-          display: true,
-          text: "MCP Client Distribution"
-        }
-      }
-    }
-  };
-
-  return getChartMarkdown("Client Distribution", config);
-}
-
-/**
- * Generate version type adoption chart
- * @param {object[]} versionTypeAdoption 
- * @returns {string}
- */
-function generateVersionTypeChart(versionTypeAdoption) {
+function generateVersionTypeChart(byVersionType) {
   const config = {
     type: "bar",
     data: {
-      labels: versionTypeAdoption.map(v => v.versionType),
+      labels: byVersionType.map(v => v.versionType),
       datasets: [{
         label: "Adoption Rate (%)",
-        data: versionTypeAdoption.map(v => v.adoptionRate),
-        backgroundColor: "rgba(153, 102, 255, 0.8)"
+        data: byVersionType.map(v => v.adoptionRate),
+        backgroundColor: ["rgba(75, 192, 92, 0.8)", "rgba(255, 205, 86, 0.8)"]
       }]
     },
     options: {
       plugins: {
-        title: {
-          display: true,
-          text: "MCP Adoption Rate by Release Type"
-        },
+        title: { display: true, text: "MCP Adoption Rate by Release Type" },
         legend: { display: false }
       },
       scales: {
-        yAxes: [{ ticks: { beginAtZero: true, max: 100 } }]
+        y: { beginAtZero: true, max: 100 }
       }
     }
   };
-
-  return getChartMarkdown("Version Type Adoption", config);
+  return `![MCP Adoption by Version Type](${getChartUrl(config)})`;
 }
 
 /**
- * Generate the executive summary section
+ * Generate the adoption by plane chart
  */
-function generateExecutiveSummary(report) {
-  const { summary, metadata, releaseAdoption } = report;
-  
-  // Use releaseAdoption.totalReleases which excludes Patch releases
-  const totalReleases = releaseAdoption?.totalReleases || summary.totalReleases;
-  
-  return `## Executive Summary
-
-| Metric | Value |
-|--------|-------|
-| **Report Period** | ${metadata.telemetryPeriod.start} to ${metadata.telemetryPeriod.end} |
-| **Release Months** | ${metadata.releaseMonths.join(", ")} |
-| **Total MCP Tool Calls** | ${formatNumber(summary.totalToolCalls)} |
-| **Unique Tools Used** | ${summary.uniqueTools} |
-| **Unique MCP Clients** | ${summary.uniqueClients} |
-| **Total SDK Releases** | ${totalReleases} |
-| **Releases with MCP Usage** | ${releaseAdoption?.releasesWithUsage || 0} (${releaseAdoption?.adoptionRate || 0}%) |
-
-`;
-}
-
-/**
- * Generate the release adoption section with chart
- */
-function generateReleaseAdoptionSection(report) {
-  const { releaseAdoption } = report;
-  if (!releaseAdoption) return "";
-
-  const chartMd = generateReleaseAdoptionChart(releaseAdoption);
-
-  let md = `## Release-Based MCP Adoption
-
-This section shows what percentage of SDK packages released in the tracked months had MCP tool usage during their development (in the prior 2 months of telemetry data).
-
-### Overall Adoption
-
-**${releaseAdoption.releasesWithUsage}** of **${releaseAdoption.totalReleases}** releases (**${releaseAdoption.adoptionRate}%**) had MCP tool activity.
-
-${chartMd}
-
-### Adoption by Language
-
-| Language | Releases | With MCP | Adoption Rate |
-|----------|----------|----------|---------------|
-`;
-
-  for (const lang of releaseAdoption.languageAdoption) {
-    md += `| ${lang.language} | ${lang.totalReleases} | ${lang.releasesWithMcp} | ${lang.adoptionRate}% |\n`;
-  }
-
-  md += `
-### Adoption by Version Type
-
-| Type | Releases | With MCP | Adoption Rate |
-|------|----------|----------|---------------|
-`;
-
-  for (const vt of releaseAdoption.versionTypeAdoption) {
-    md += `| ${vt.versionType} | ${vt.totalReleases} | ${vt.releasesWithMcp} | ${vt.adoptionRate}% |\n`;
-  }
-
-  // Add version type chart
-  const vtChartMd = generateVersionTypeChart(releaseAdoption.versionTypeAdoption);
-  md += `\n${vtChartMd}\n`;
-
-  // List packages with MCP usage
-  const withUsage = releaseAdoption.releaseDetails.filter(r => r.hadMcpUsage);
-  if (withUsage.length > 0) {
-    md += `
-### Released Packages with MCP Usage
-
-| Package | Version | Type | Language | MCP Calls | Tools Used |
-|---------|---------|------|----------|-----------|------------|
-`;
-    for (const pkg of withUsage.slice(0, 20)) {
-      const tools = pkg.toolsUsed.slice(0, 3).map(t => `\`${t.replace("azsdk_", "")}\``).join(", ");
-      md += `| ${pkg.packageName} | ${pkg.version} | ${pkg.versionType} | ${pkg.language} | ${pkg.mcpUsageCount} | ${tools} |\n`;
+function generatePlaneChart(byPlane) {
+  const config = {
+    type: "doughnut",
+    data: {
+      labels: byPlane.map(p => `${p.plane} (${p.withMcp}/${p.total})`),
+      datasets: [{
+        data: byPlane.map(p => p.total),
+        backgroundColor: ["rgba(54, 162, 235, 0.8)", "rgba(255, 99, 132, 0.8)"]
+      }]
+    },
+    options: {
+      plugins: {
+        title: { display: true, text: "Releases by Plane" }
+      }
     }
-  }
-
-  return md + "\n";
+  };
+  return `![Releases by Plane](${getChartUrl(config)})`;
 }
 
 /**
- * Generate the client adoption section with chart
+ * Generate the main report
  */
-function generateClientSection(report) {
-  const clients = Object.values(report.clientAnalysis)
-    .sort((a, b) => b.totalCalls - a.totalCalls);
-
-  const chartMd = generateClientChart(report.clientAnalysis);
-
-  let md = `## MCP Client Adoption
-
-${chartMd}
-
-### Client Usage Summary
-
-| Client | Total Calls | Versions Tracked | Users |
-|--------|-------------|------------------|-------|
-`;
-
-  for (const client of clients) {
-    md += `| ${client.name} | ${formatNumber(client.totalCalls)} | ${client.versions.length} | ${client.totalUsers} |\n`;
-  }
-
-  return md + "\n";
-}
-
-/**
- * Generate the tool usage section with chart
- */
-function generateToolSection(report) {
-  const tools = Object.values(report.toolAnalysis)
-    .sort((a, b) => b.totalCalls - a.totalCalls);
-
-  const chartMd = generateToolUsageChart(report.toolAnalysis);
-
-  let md = `## MCP Tool Usage
-
-${chartMd}
-
-### Top Tools by Usage
-
-| Tool | Category | Calls | Success Rate | Avg Duration | Packages |
-|------|----------|-------|--------------|--------------|----------|
-`;
-
-  for (const tool of tools.slice(0, 15)) {
-    const statusIcon = tool.successRate >= 90 ? "✅" : tool.successRate >= 70 ? "⚠️" : "❌";
-    md += `| ${statusIcon} \`${tool.name}\` | ${tool.category} | ${formatNumber(tool.totalCalls)} | ${tool.successRate}% | ${Math.round(tool.avgDuration)}ms | ${tool.distinctPackages || 0} |\n`;
-  }
-
-  // Group by category
-  const byCategory = {};
-  for (const tool of tools) {
-    if (!byCategory[tool.category]) byCategory[tool.category] = [];
-    byCategory[tool.category].push(tool);
-  }
-
-  md += `
-### Tools by Category
-
-`;
-
-  for (const [category, categoryTools] of Object.entries(byCategory).sort((a, b) => b[1].length - a[1].length)) {
-    const totalCalls = categoryTools.reduce((sum, t) => sum + t.totalCalls, 0);
-    md += `- **${category}**: ${categoryTools.length} tools, ${formatNumber(totalCalls)} total calls\n`;
-  }
-
-  return md + "\n";
-}
-
-/**
- * Generate insights section
- */
-function generateInsightsSection(report) {
-  const tools = Object.values(report.toolAnalysis);
-  const lowSuccessTools = tools.filter(t => t.successRate < 70 && t.totalCalls > 10)
-    .sort((a, b) => a.successRate - b.successRate);
-
-  let md = `## Insights & Recommendations
-
-### 🎯 Key Findings
-
-1. **MCP Adoption Rate:** ${report.releaseAdoption?.adoptionRate || 0}% of SDK releases in the tracked period had MCP tool usage during development.
-
-2. **Client Diversity:** ${Object.keys(report.clientAnalysis).length} different MCP clients are being used, with VS Code being the most popular.
-
-3. **Tool Coverage:** ${tools.length} unique MCP tools are being actively used.
-
-`;
-
-  if (lowSuccessTools.length > 0) {
-    md += `### ⚠️ Tools Needing Attention
-
-These tools have low success rates (<70%) and significant usage:
-
-| Tool | Success Rate | Calls |
-|------|--------------|-------|
-`;
-    for (const tool of lowSuccessTools.slice(0, 5)) {
-      md += `| \`${tool.name}\` | ${tool.successRate}% | ${tool.totalCalls} |\n`;
-    }
-  }
-
-  md += `
-### 📈 Recommendations
-
-1. **Investigate low-success-rate tools** for common error patterns
-2. **Track adoption trends** over time to measure improvement
-3. **Target languages with low adoption** for outreach and training
-`;
-
-  return md;
-}
-
-/**
- * Generate the full markdown report
- */
-function generateReport(report) {
-  const now = new Date().toISOString();
+function generateReport(data) {
+  const { metadata, summary, byLanguage, byVersionType, byPlane, releases, toolSummary, clientSummary } = data;
 
   let md = `# Azure SDK MCP Adoption Report
 
-> Generated: ${formatDate(now)}
+> Generated: ${new Date(metadata.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
 
-This report correlates Azure SDK MCP (Model Context Protocol) tool usage with monthly SDK releases to provide insights into AI-assisted development patterns.
+This report shows MCP (Model Context Protocol) tool usage for Azure SDK releases.
 
 ---
 
+## Executive Summary
+
+| Metric | Value |
+|--------|-------|
+| **Telemetry Period** | ${metadata.telemetryPeriod.start} to ${metadata.telemetryPeriod.end} |
+| **Release Month(s)** | ${metadata.releaseMonths.join(", ")} |
+| **Total Releases** | ${summary.totalReleases} |
+| **Releases with MCP Usage** | ${summary.releasesWithMcp} (${summary.adoptionRate}%) |
+
+---
+
+## MCP Adoption Overview
+
+**${summary.releasesWithMcp}** of **${summary.totalReleases}** releases (**${summary.adoptionRate}%**) had MCP tool usage during development.
+
+### By Language
+
+${generateLanguageChart(byLanguage)}
+
+| Language | Total Releases | With MCP | Adoption Rate |
+|----------|----------------|----------|---------------|
 `;
 
-  md += generateExecutiveSummary(report);
-  md += generateReleaseAdoptionSection(report);
-  md += generateClientSection(report);
-  md += generateToolSection(report);
-  md += generateInsightsSection(report);
+  for (const lang of byLanguage) {
+    md += `| ${lang.language} | ${lang.total} | ${lang.withMcp} | ${lang.adoptionRate}% |\n`;
+  }
+
+  md += `
+### By Release Type
+
+${generateVersionTypeChart(byVersionType)}
+
+| Type | Total Releases | With MCP | Adoption Rate |
+|------|----------------|----------|---------------|
+`;
+
+  for (const vt of byVersionType) {
+    md += `| ${vt.versionType} | ${vt.total} | ${vt.withMcp} | ${vt.adoptionRate}% |\n`;
+  }
+
+  md += `
+### By Plane (Management vs Data)
+
+${generatePlaneChart(byPlane)}
+
+| Plane | Total Releases | With MCP | Adoption Rate |
+|-------|----------------|----------|---------------|
+`;
+
+  for (const p of byPlane) {
+    md += `| ${p.plane} | ${p.total} | ${p.withMcp} | ${p.adoptionRate}% |\n`;
+  }
+
+  // Releases with MCP usage - detailed list
+  const withMcp = releases.filter(r => r.hadMcpUsage);
+  if (withMcp.length > 0) {
+    md += `
+---
+
+## Released Packages with MCP Usage
+
+The following **${withMcp.length}** packages released in ${metadata.releaseMonths.join(", ")} used AzSDK MCP tools during development:
+
+`;
+
+    // Group by language for better organization
+    const byLang = {};
+    for (const r of withMcp) {
+      if (!byLang[r.language]) byLang[r.language] = [];
+      byLang[r.language].push(r);
+    }
+
+    // Track client usage across all released packages with MCP
+    const clientPackageCount = new Map();
+
+    for (const [lang, pkgs] of Object.entries(byLang).sort((a, b) => b[1].length - a[1].length)) {
+      md += `### ${lang.toUpperCase()} (${pkgs.length} packages)\n\n`;
+      
+      for (const r of pkgs.sort((a, b) => b.mcpCallCount - a.mcpCallCount)) {
+        const allTools = r.mcpToolsUsed.map(t => `\`${t.replace("azsdk_", "")}\``).join(", ");
+        const allClients = r.mcpClientsUsed?.map(c => c.name).filter(Boolean) || [];
+        const uniqueClients = [...new Set(allClients)];
+        
+        // Track which clients were used for which packages
+        for (const client of uniqueClients) {
+          if (!clientPackageCount.has(client)) {
+            clientPackageCount.set(client, new Set());
+          }
+          clientPackageCount.get(client).add(r.packageName);
+        }
+        
+        md += `**${r.packageName}** v${r.version}\n`;
+        md += `- Type: ${r.versionType} | Plane: ${r.plane}\n`;
+        md += `- MCP Calls: **${r.mcpCallCount}**\n`;
+        md += `- Tools Used: ${allTools || "N/A"}\n`;
+        md += `- Clients Used: ${uniqueClients.length > 0 ? uniqueClients.join(", ") : "N/A"}\n\n`;
+      }
+    }
+
+    // Add client comparison section
+    if (clientPackageCount.size > 0) {
+      md += `### MCP Client Usage Comparison\n\n`;
+      md += `Packages that used MCP tools by client (a package may use multiple clients):\n\n`;
+      md += `| Client | Packages |\n`;
+      md += `|--------|----------|\n`;
+      
+      const sortedClients = [...clientPackageCount.entries()]
+        .sort((a, b) => b[1].size - a[1].size);
+      
+      for (const [client, packages] of sortedClients) {
+        md += `| ${client} | ${packages.size} |\n`;
+      }
+      md += `\n`;
+    }
+  }
+
+  // Tool usage
+  if (toolSummary && toolSummary.length > 0) {
+    md += `
+---
+
+## MCP Tool Usage
+
+| Tool | Calls | Success Rate | Users | Packages |
+|------|-------|--------------|-------|----------|
+`;
+
+    for (const t of toolSummary.slice(0, 15)) {
+      const icon = t.successRate >= 90 ? "✅" : t.successRate >= 70 ? "⚠️" : "❌";
+      md += `| ${icon} \`${t.name}\` | ${formatNumber(t.calls)} | ${t.successRate}% | ${t.userCount} | ${t.packageCount} |\n`;
+    }
+  }
 
   md += `
 ---
 
-## Appendix
-
-### Data Sources
-
-- **Telemetry:** Azure Data Explorer (Kusto) - \`ddazureclients.kusto.windows.net/AzSdkToolsMcp\`
-- **Releases:** GitHub - \`Azure/azure-sdk\` repository
-
-### Report Configuration
-
-\`\`\`json
-${JSON.stringify(report.metadata, null, 2)}
-\`\`\`
+*Report generated by Azure SDK MCP Adoption Skill*
 `;
 
   return md;
@@ -441,70 +278,48 @@ ${JSON.stringify(report.metadata, null, 2)}
  * Main function
  */
 async function main() {
-  // Get output directory (shared with pipeline)
-  OUTPUT_DIR = getOutputDir();
-  console.log(`Output directory: ${OUTPUT_DIR}`);
+  const outputDir = getOutputDir();
+  console.log(`Output directory: ${outputDir}`);
   console.log("Loading correlation data...");
-  
-  let report = null;
-  const correlationPath = join(OUTPUT_DIR, "correlation.json");
-  
+
+  // Load correlation data
+  let correlationData = null;
+  const correlationPath = join(outputDir, "correlation.json");
+
   if (existsSync(correlationPath)) {
-    report = JSON.parse(readFileSync(correlationPath, "utf-8"));
+    correlationData = JSON.parse(readFileSync(correlationPath, "utf-8"));
   } else {
-    // Try to find correlation.json in recent runs
-    console.log("File not found in current run, searching recent runs...");
     const found = findOutputDirWithFiles(["correlation.json"]);
-    
-    if (found) {
-      const foundPath = found.dir 
-        ? join(found.dir, "correlation.json")
-        : found.files["correlation.json"];
-      console.log(`Found data in: ${foundPath}`);
-      report = JSON.parse(readFileSync(foundPath, "utf-8"));
+    if (found?.files) {
+      correlationData = JSON.parse(readFileSync(found.files["correlation.json"], "utf-8"));
+    } else if (found?.dir) {
+      correlationData = JSON.parse(readFileSync(join(found.dir, "correlation.json"), "utf-8"));
     }
   }
 
-  if (!report) {
-    console.error("correlation.json not found.");
-    console.error("Run correlate.js first to generate correlation.json");
+  if (!correlationData) {
+    console.error("correlation.json not found. Run correlate step first.");
     process.exit(1);
   }
 
-  console.log("Generating markdown report with charts...");
-  const markdown = generateReport(report);
+  console.log("Generating markdown report...");
+  const report = generateReport(correlationData);
 
-  // Write report
-  const reportPath = join(OUTPUT_DIR, "report.md");
-  writeFileSync(reportPath, markdown);
+  // Write report as plain text (not JSON)
+  const reportPath = join(outputDir, "report.md");
+  writeFileSync(reportPath, report);
   console.log(`Report written to ${reportPath}`);
 
   // Write summary JSON
   const summaryPath = writeOutput("summary.json", {
-    generatedAt: new Date().toISOString(),
-    period: report.metadata.telemetryPeriod,
-    releaseMonths: report.metadata.releaseMonths,
-    summary: report.summary,
-    releaseAdoption: {
-      total: report.releaseAdoption?.totalReleases || 0,
-      withMcp: report.releaseAdoption?.releasesWithUsage || 0,
-      rate: report.releaseAdoption?.adoptionRate || 0
-    },
-    topClients: Object.values(report.clientAnalysis)
-      .sort((a, b) => b.totalCalls - a.totalCalls)
-      .slice(0, 5)
-      .map(c => ({ name: c.name, calls: c.totalCalls })),
-    topTools: Object.values(report.toolAnalysis)
-      .sort((a, b) => b.totalCalls - a.totalCalls)
-      .slice(0, 10)
-      .map(t => ({ name: t.name, calls: t.totalCalls, successRate: t.successRate }))
-  }, OUTPUT_DIR);
+    ...correlationData.summary,
+    byLanguage: correlationData.byLanguage,
+    byVersionType: correlationData.byVersionType,
+    byPlane: correlationData.byPlane
+  }, outputDir);
   console.log(`Summary written to ${summaryPath}`);
 
-  console.log("\nDone! Report files generated:");
-  console.log(`  📄 ${reportPath}`);
-  console.log(`  📊 ${summaryPath}`);
-  console.log(`  📈 Charts embedded via QuickChart.io URLs`);
+  console.log("\nDone!");
 }
 
 main().catch(console.error);

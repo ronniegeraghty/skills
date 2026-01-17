@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 /**
- * Unified runner script for Azure SDK MCP Adoption reporting
+ * Azure SDK MCP Adoption Report Generator
  * 
- * This script orchestrates all the individual scripts in the correct order:
- * 1. fetch-telemetry.js - Fetch MCP telemetry from Kusto
- * 2. fetch-releases.js - Fetch release data from GitHub
- * 3. correlate.js - Correlate telemetry with releases
- * 4. report.js - Generate the markdown report
- * 
- * All scripts share the same output directory via the AZSDK_MCP_RUN_ID env var.
+ * Orchestrates the pipeline:
+ * 1. fetch-telemetry - Get MCP tool usage from Kusto (3 months back)
+ * 2. fetch-releases - Get releases from GitHub (target month)
+ * 3. correlate - Match releases with MCP usage
+ * 4. report - Generate markdown report
  */
 
 import { spawn } from "child_process";
@@ -18,19 +16,15 @@ import { getOutputDir, generateTimestamp } from "./utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Define the pipeline steps
 const STEPS = [
-  { name: "fetch-telemetry", script: "fetch-telemetry.js", description: "Fetching MCP telemetry from Kusto" },
-  { name: "fetch-releases", script: "fetch-releases.js", description: "Fetching release data from GitHub" },
-  { name: "correlate", script: "correlate.js", description: "Correlating telemetry with releases" },
-  { name: "report", script: "report.js", description: "Generating markdown report" }
+  { name: "fetch-telemetry", script: "fetch-telemetry.js", desc: "Fetching MCP telemetry from Kusto" },
+  { name: "fetch-releases", script: "fetch-releases.js", desc: "Fetching releases from GitHub" },
+  { name: "correlate", script: "correlate.js", desc: "Correlating releases with MCP usage" },
+  { name: "report", script: "report.js", desc: "Generating markdown report" }
 ];
 
 /**
- * Run a single step as a child process
- * @param {object} step - Step configuration
- * @param {string[]} args - Command line arguments to pass through
- * @returns {Promise<void>}
+ * Run a single step
  */
 function runStep(step, args = []) {
   return new Promise((resolve, reject) => {
@@ -38,7 +32,7 @@ function runStep(step, args = []) {
     
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Step: ${step.name}`);
-    console.log(`Description: ${step.description}`);
+    console.log(`Description: ${step.desc}`);
     console.log("=".repeat(60));
     
     const child = spawn("node", [scriptPath, ...args], {
@@ -48,11 +42,8 @@ function runStep(step, args = []) {
     });
     
     child.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`${step.name} failed with exit code ${code}`));
-      }
+      if (code === 0) resolve();
+      else reject(new Error(`${step.name} failed with exit code ${code}`));
     });
     
     child.on("error", (err) => {
@@ -62,8 +53,7 @@ function runStep(step, args = []) {
 }
 
 /**
- * Parse arguments to determine which steps to run and which args to pass
- * @returns {{ steps: string[], passthrough: string[] }}
+ * Parse command line arguments
  */
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -79,9 +69,7 @@ function parseArgs() {
       printHelp();
       process.exit(0);
     } else {
-      // Pass through other arguments to child scripts
       passthrough.push(arg);
-      // Include the value if this looks like a flag
       if (arg.startsWith("--") && args[i + 1] && !args[i + 1].startsWith("--")) {
         passthrough.push(args[++i]);
       }
@@ -92,7 +80,7 @@ function parseArgs() {
 }
 
 /**
- * Print help message
+ * Print help
  */
 function printHelp() {
   console.log(`
@@ -101,39 +89,31 @@ Azure SDK MCP Adoption Report Generator
 Usage: node src/run.js [options]
 
 Options:
-  --help, -h              Show this help message
-  --step <name>           Run only specific step(s). Can be specified multiple times.
-                          Valid steps: ${STEPS.map(s => s.name).join(", ")}
+  --help, -h              Show this help
+  --step <name>           Run specific step(s) only
+                          Steps: fetch-telemetry, fetch-releases, correlate, report
   
-  All other arguments are passed through to the individual scripts:
-  
-  --start YYYY-MM-DD      Start date for telemetry (default: 2 months before release cycle end)
-  --end YYYY-MM-DD        End date for telemetry (default: end of 16th of current month)
-  --month YYYY-MM         Month(s) for release data (can specify multiple)
-  --language js,python    Languages to include (default: all)
+Arguments passed to scripts:
+  --month YYYY-MM         Release month (default: current month)
+  --start YYYY-MM-DD      Telemetry start date (default: 3 months before end)
+  --end YYYY-MM-DD        Telemetry end date (default: 17th of current month)
 
 Examples:
-  # Run the full pipeline with defaults
-  node src/run.js
+  # Run full pipeline for January 2026 releases
+  node src/run.js --month 2026-01 --end 2026-01-17
   
-  # Run with specific date range
-  node src/run.js --start 2025-12-01 --end 2026-01-17
-  
-  # Run only specific steps
+  # Run only correlation and report steps
   node src/run.js --step correlate --step report
-  
-  # Run with specific months
-  node src/run.js --month 2025-12 --month 2026-01
 `);
 }
 
 /**
- * Main entry point
+ * Main
  */
 async function main() {
   const { steps: requestedSteps, passthrough } = parseArgs();
   
-  // Set the run ID so all scripts share the same output directory
+  // Set shared run ID
   if (!process.env.AZSDK_MCP_RUN_ID) {
     process.env.AZSDK_MCP_RUN_ID = generateTimestamp();
   }
@@ -144,35 +124,33 @@ async function main() {
   console.log("║      Azure SDK MCP Adoption Report Generator               ║");
   console.log("╚════════════════════════════════════════════════════════════╝");
   console.log(`\nRun ID: ${process.env.AZSDK_MCP_RUN_ID}`);
-  console.log(`Output directory: ${outputDir}`);
+  console.log(`Output: ${outputDir}`);
   
-  // Determine which steps to run
+  // Determine steps to run
   let stepsToRun = STEPS;
   if (requestedSteps.length > 0) {
     stepsToRun = requestedSteps.map(name => {
       const step = STEPS.find(s => s.name === name);
       if (!step) {
         console.error(`Unknown step: ${name}`);
-        console.error(`Valid steps: ${STEPS.map(s => s.name).join(", ")}`);
         process.exit(1);
       }
       return step;
     });
   }
   
-  console.log(`\nSteps to run: ${stepsToRun.map(s => s.name).join(" → ")}`);
+  console.log(`Steps: ${stepsToRun.map(s => s.name).join(" → ")}`);
   if (passthrough.length > 0) {
-    console.log(`Arguments: ${passthrough.join(" ")}`);
+    console.log(`Args: ${passthrough.join(" ")}`);
   }
   
   const startTime = Date.now();
   
-  // Run each step in sequence
   for (const step of stepsToRun) {
     try {
       await runStep(step, passthrough);
     } catch (error) {
-      console.error(`\n❌ Pipeline failed at step: ${step.name}`);
+      console.error(`\n❌ Failed at: ${step.name}`);
       console.error(error.message);
       process.exit(1);
     }
@@ -181,9 +159,9 @@ async function main() {
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   
   console.log(`\n${"=".repeat(60)}`);
-  console.log("✅ Pipeline completed successfully!");
-  console.log(`Total time: ${elapsed}s`);
-  console.log(`Output directory: ${outputDir}`);
+  console.log("✅ Pipeline completed!");
+  console.log(`Time: ${elapsed}s`);
+  console.log(`Output: ${outputDir}`);
   console.log("=".repeat(60));
 }
 

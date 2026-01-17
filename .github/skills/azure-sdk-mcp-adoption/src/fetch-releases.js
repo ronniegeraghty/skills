@@ -1,8 +1,8 @@
 /**
  * Fetch Azure SDK release data from GitHub
  * 
- * Downloads monthly release YAML files and the latest packages CSV
- * from the Azure/azure-sdk repository.
+ * Downloads monthly release YAML files from the Azure/azure-sdk repository.
+ * Classifies releases as GA (stable) or Beta based on version patterns.
  */
 
 import yaml from "js-yaml";
@@ -11,7 +11,72 @@ import { getOutputDir, writeOutput } from "./utils.js";
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases";
 
 // Supported languages for release data
-const LANGUAGES = ["js", "python", "dotnet", "java", "go", "cpp", "c", "ios", "android", "rust"];
+const LANGUAGES = ["js", "python", "dotnet", "java", "go", "cpp", "c", "ios", "android"];
+
+/**
+ * Determine if a version is Beta or GA (stable)
+ * 
+ * Beta patterns (case-insensitive):
+ * - Contains "-beta" (e.g., 2.1.0-beta.2)
+ * - Contains "-preview" (e.g., 1.0.0-preview.1)
+ * - Contains "-alpha" (e.g., 1.0.0-alpha.1)
+ * - Contains "-rc" (e.g., 1.0.0-rc.1)
+ * - Python: contains "b" followed by digits (e.g., 1.0.0b3, 2.0.0b1)
+ * - Python: contains "a" followed by digits for alpha (e.g., 1.0.0a1)
+ * 
+ * Everything else is GA (stable), including patch releases like 6.0.2
+ * 
+ * @param {string} version - The version string
+ * @returns {"GA" | "Beta"}
+ */
+function classifyVersion(version) {
+  if (!version) return "GA";
+  
+  const v = version.toLowerCase();
+  
+  // Check for common beta/preview patterns
+  if (v.includes("-beta") || 
+      v.includes("-preview") || 
+      v.includes("-alpha") || 
+      v.includes("-rc")) {
+    return "Beta";
+  }
+  
+  // Python-style beta versions: 1.0.0b3, 2.0.0b1 (but not "blob" etc.)
+  // Pattern: digit followed by 'b' or 'a' followed by digit(s) at end
+  if (/\d[ab]\d+$/.test(v)) {
+    return "Beta";
+  }
+  
+  // Everything else is GA (stable), including patch releases
+  return "GA";
+}
+
+/**
+ * Determine if package is management plane or data plane
+ * 
+ * Management plane patterns:
+ * - Contains "mgmt" or "management"
+ * - Contains "arm-" prefix
+ * - Contains "resourcemanager"
+ * 
+ * @param {string} packageName - The package name
+ * @returns {"Management" | "Data"}
+ */
+function classifyPlane(packageName) {
+  if (!packageName) return "Data";
+  
+  const name = packageName.toLowerCase();
+  
+  if (name.includes("mgmt") || 
+      name.includes("management") || 
+      name.includes("arm-") ||
+      name.includes("resourcemanager")) {
+    return "Management";
+  }
+  
+  return "Data";
+}
 
 /**
  * Parse command line arguments
@@ -30,16 +95,11 @@ function parseArgs() {
     }
   }
 
-  // Default to current and previous month if not specified
+  // Default to current month only
   if (months.length === 0) {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     months.push(currentMonth);
-    
-    // Add previous month
-    const prev = new Date(now.getFullYear(), now.getMonth() - 1);
-    const prevMonth = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
-    months.push(prevMonth);
   }
 
   return { months, languages };
@@ -67,66 +127,6 @@ async function fetchUrl(url) {
 }
 
 /**
- * Fetch the latest packages CSV for a language
- * @param {string} language 
- * @returns {Promise<object[]>}
- */
-async function fetchLatestPackages(language) {
-  const url = `${GITHUB_RAW_BASE}/latest/${language}-packages.csv`;
-  console.log(`  Fetching latest packages for ${language}...`);
-  
-  const csv = await fetchUrl(url);
-  if (!csv) {
-    return [];
-  }
-
-  // Parse CSV
-  const lines = csv.split("\n").filter(line => line.trim());
-  if (lines.length < 2) {
-    return [];
-  }
-
-  const headers = lines[0].split(",").map(h => h.trim());
-  const packages = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
-    const pkg = {};
-    headers.forEach((header, idx) => {
-      pkg[header] = values[idx] || "";
-    });
-    packages.push(pkg);
-  }
-
-  return packages;
-}
-
-/**
- * Parse a CSV line handling quoted values
- * @param {string} line 
- * @returns {string[]}
- */
-function parseCSVLine(line) {
-  const values = [];
-  let current = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === "," && !inQuotes) {
-      values.push(current.trim());
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-  values.push(current.trim());
-  return values;
-}
-
-/**
  * Fetch monthly release YAML for a language
  * @param {string} month - Format: YYYY-MM
  * @param {string} language 
@@ -147,12 +147,24 @@ async function fetchMonthlyReleases(month, language) {
       return [];
     }
 
-    // Add metadata to each entry
-    return data.entries.map(entry => ({
-      ...entry,
-      language,
-      releaseMonth: month
-    }));
+    // Process each entry with proper classification
+    return data.entries.map(entry => {
+      const packageName = entry.Name || entry.Package;
+      const version = entry.Version;
+      
+      return {
+        packageName,
+        version,
+        displayName: entry.DisplayName || packageName,
+        serviceName: entry.ServiceName || "",
+        versionType: classifyVersion(version),  // GA or Beta
+        plane: classifyPlane(packageName),       // Management or Data
+        language,
+        releaseMonth: month,
+        // Keep original VersionType for reference
+        originalVersionType: entry.VersionType || ""
+      };
+    });
   } catch (error) {
     console.warn(`  Warning: Failed to parse YAML for ${language} ${month}: ${error.message}`);
     return [];
@@ -168,17 +180,6 @@ async function main() {
   console.log(`Languages: ${languages.join(", ")}`);
 
   const allReleases = [];
-  const allPackages = {};
-
-  // Fetch latest packages for each language
-  console.log("\n=== Fetching Latest Package Catalogs ===");
-  for (const lang of languages) {
-    const packages = await fetchLatestPackages(lang);
-    if (packages.length > 0) {
-      allPackages[lang] = packages;
-      console.log(`    Found ${packages.length} packages for ${lang}`);
-    }
-  }
 
   // Fetch monthly releases for each language and month
   console.log("\n=== Fetching Monthly Releases ===");
@@ -193,18 +194,17 @@ async function main() {
     }
   }
 
-  // Get timestamped output directory
+  // Get output directory
   const outputDir = getOutputDir();
 
-  // Write results to JSON file
+  // Build output
   const output = {
     metadata: {
       months,
       languages,
       generatedAt: new Date().toISOString()
     },
-    latestPackages: allPackages,
-    monthlyReleases: allReleases
+    releases: allReleases
   };
 
   const outputPath = writeOutput("releases.json", output, outputDir);
@@ -212,7 +212,7 @@ async function main() {
 
   // Print summary
   console.log("\n=== Release Summary ===");
-  console.log(`Total monthly releases: ${allReleases.length}`);
+  console.log(`Total releases: ${allReleases.length}`);
   
   // Group by language
   const byLang = {};
@@ -224,22 +224,29 @@ async function main() {
     console.log(`  ${lang}: ${count}`);
   }
 
-  // Group by version type
-  const byType = {};
+  // Group by version type (GA vs Beta)
+  const byType = { GA: 0, Beta: 0 };
   for (const release of allReleases) {
-    const type = release.VersionType || "Unknown";
-    byType[type] = (byType[type] || 0) + 1;
+    byType[release.versionType]++;
   }
-  console.log("\nReleases by version type:");
-  for (const [type, count] of Object.entries(byType).sort((a, b) => b[1] - a[1])) {
-    console.log(`  ${type}: ${count}`);
-  }
+  console.log("\nReleases by type:");
+  console.log(`  GA (stable): ${byType.GA}`);
+  console.log(`  Beta (preview): ${byType.Beta}`);
 
-  // Sample some releases
+  // Group by plane
+  const byPlane = { Management: 0, Data: 0 };
+  for (const release of allReleases) {
+    byPlane[release.plane]++;
+  }
+  console.log("\nReleases by plane:");
+  console.log(`  Management: ${byPlane.Management}`);
+  console.log(`  Data: ${byPlane.Data}`);
+
+  // Sample releases
   if (allReleases.length > 0) {
     console.log("\nSample releases:");
     allReleases.slice(0, 5).forEach((r, i) => {
-      console.log(`  ${i + 1}. ${r.Name || r.Package} v${r.Version} (${r.language}, ${r.VersionType})`);
+      console.log(`  ${i + 1}. ${r.packageName} v${r.version} (${r.language}, ${r.versionType}, ${r.plane})`);
     });
   }
 }

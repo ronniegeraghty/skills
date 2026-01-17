@@ -1,32 +1,19 @@
 /**
  * Fetch MCP tool usage telemetry from Kusto
  * 
- * Queries the RawEventsDependencies table to get aggregated tool usage data
- * grouped by client, tool, and time period.
+ * Queries the AzSdkToolsMcp database to get tool usage data.
+ * Resolves package names from TypeSpec project paths when needed.
  */
 
 import { Client, KustoConnectionStringBuilder } from "azure-kusto-data";
+import yaml from "js-yaml";
 import { getOutputDir, writeOutput } from "./utils.js";
 
 const CLUSTER_URI = "https://ddazureclients.kusto.windows.net";
 const DATABASE = "AzSdkToolsMcp";
 
-/**
- * Calculate the release cycle end date for a given month.
- * Azure SDK releases on the 16th of each month, so the telemetry end date
- * should be the end of the 16th (i.e., 17th exclusive).
- * 
- * @param {Date} date - A date within the target release month
- * @returns {string} - The release cycle end date (YYYY-MM-DD)
- */
-function getReleaseCycleEndDate(date) {
-  // Release cycle ends at the end of the 16th (so we use the 17th as exclusive end)
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  // Create date for the 17th of the month (end of day on the 16th)
-  const endDate = new Date(year, month, 17);
-  return endDate.toISOString().split("T")[0];
-}
+// Cache for tspconfig lookups to avoid repeated fetches
+const tspConfigCache = new Map();
 
 /**
  * Parse command line arguments
@@ -45,181 +32,145 @@ function parseArgs() {
     }
   }
 
-  // Default: Use release cycle dates if not specified
-  // End date: End of release cycle (end of the 16th) for the current month
-  // Start date: 2 months back from the release cycle end date
+  // Default: end = today, start = 3 months back
   if (!endDate) {
     const now = new Date();
-    endDate = getReleaseCycleEndDate(now);
+    // Default to 17th of current month (end of 16th release cycle)
+    endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-17`;
   }
   if (!startDate) {
-    // Parse the end date and go back 2 months
     const end = new Date(endDate);
-    const twoMonthsAgo = new Date(end.getFullYear(), end.getMonth() - 2, end.getDate());
-    startDate = twoMonthsAgo.toISOString().split("T")[0];
+    const threeMonthsAgo = new Date(end.getFullYear(), end.getMonth() - 3, end.getDate());
+    startDate = threeMonthsAgo.toISOString().split("T")[0];
   }
 
   return { startDate, endDate };
 }
 
 /**
- * Main function to fetch telemetry data
+ * Extract the relative specification path from an absolute TypeSpec project path
+ * Examples:
+ *   "/home/runner/work/azure-rest-api-specs/azure-rest-api-specs/specification/mongocluster/..." 
+ *   -> "specification/mongocluster/..."
+ *   "c:\Users\...\azure-rest-api-specs\specification\dell\Dell.Storage.Management"
+ *   -> "specification/dell/Dell.Storage.Management"
+ * 
+ * @param {string} absolutePath 
+ * @returns {string|null}
  */
-async function main() {
-  const { startDate, endDate } = parseArgs();
-  console.log(`Fetching telemetry from ${startDate} to ${endDate}...`);
+function extractSpecificationPath(absolutePath) {
+  if (!absolutePath) return null;
+  
+  // Normalize path separators
+  const normalized = absolutePath.replace(/\\/g, "/");
+  
+  // Find "specification/" in the path
+  const specIndex = normalized.indexOf("specification/");
+  if (specIndex === -1) return null;
+  
+  return normalized.substring(specIndex);
+}
 
-  // Connect to Kusto
-  const kcsb = KustoConnectionStringBuilder.withAzLoginIdentity(CLUSTER_URI);
-  const client = new Client(kcsb);
-
-  try {
-    // Query 1: Daily usage by client and tool
-    console.log("\nFetching daily usage aggregates...");
-    const dailyQuery = `
-      RawEventsDependencies
-      | where timestamp >= datetime('${startDate}') and timestamp < datetime('${endDate}')
-      | extend 
-          clientName = tostring(customDimensions["clientname"]),
-          clientVersion = tostring(customDimensions["clientversion"]),
-          toolName = tostring(customDimensions["toolname"]),
-          packageName = tostring(customDimensions["package_name"]),
-          language = tostring(customDimensions["language"]),
-          operationStatus = tostring(customDimensions["operation_status"]),
-          serverVersion = tostring(customDimensions["version"]),
-          deviceId = tostring(customDimensions["devdeviceid"])
-      | summarize 
-          totalCalls = count(),
-          successCount = countif(operationStatus == "Succeeded"),
-          failureCount = countif(operationStatus == "Failed"),
-          avgDuration = avg(duration),
-          distinctUsers = dcount(deviceId)
-        by 
-          day = bin(timestamp, 1d),
-          clientName,
-          toolName,
-          packageName,
-          language
-      | order by day desc, totalCalls desc
-    `;
-    const dailyResult = await client.execute(DATABASE, dailyQuery);
-    const dailyData = extractResults(dailyResult);
-    console.log(`  Found ${dailyData.length} daily aggregates`);
-
-    // Query 2: Overall summary by client
-    console.log("Fetching client summary...");
-    const clientSummaryQuery = `
-      RawEventsDependencies
-      | where timestamp >= datetime('${startDate}') and timestamp < datetime('${endDate}')
-      | extend 
-          clientName = tostring(customDimensions["clientname"]),
-          clientVersion = tostring(customDimensions["clientversion"]),
-          deviceId = tostring(customDimensions["devdeviceid"])
-      | summarize 
-          totalCalls = count(),
-          distinctUsers = dcount(deviceId),
-          firstSeen = min(timestamp),
-          lastSeen = max(timestamp)
-        by clientName, clientVersion
-      | order by totalCalls desc
-    `;
-    const clientResult = await client.execute(DATABASE, clientSummaryQuery);
-    const clientData = extractResults(clientResult);
-    console.log(`  Found ${clientData.length} client versions`);
-
-    // Query 3: Tool usage summary
-    console.log("Fetching tool usage summary...");
-    const toolSummaryQuery = `
-      RawEventsDependencies
-      | where timestamp >= datetime('${startDate}') and timestamp < datetime('${endDate}')
-      | extend 
-          toolName = tostring(customDimensions["toolname"]),
-          operationStatus = tostring(customDimensions["operation_status"]),
-          deviceId = tostring(customDimensions["devdeviceid"]),
-          packageName = tostring(customDimensions["package_name"])
-      | summarize 
-          totalCalls = count(),
-          successRate = round(countif(operationStatus == "Succeeded") * 100.0 / count(), 2),
-          avgDuration = round(avg(duration), 2),
-          distinctUsers = dcount(deviceId),
-          distinctPackages = dcount(packageName)
-        by toolName
-      | order by totalCalls desc
-    `;
-    const toolResult = await client.execute(DATABASE, toolSummaryQuery);
-    const toolData = extractResults(toolResult);
-    console.log(`  Found ${toolData.length} tools`);
-
-    // Query 4: Package usage (for correlation with releases)
-    console.log("Fetching package usage...");
-    const packageQuery = `
-      RawEventsDependencies
-      | where timestamp >= datetime('${startDate}') and timestamp < datetime('${endDate}')
-      | extend 
-          packageName = tostring(customDimensions["package_name"]),
-          language = tostring(customDimensions["language"]),
-          deviceId = tostring(customDimensions["devdeviceid"])
-      | where isnotempty(packageName)
-      | summarize 
-          usageCount = count(),
-          distinctUsers = dcount(deviceId)
-        by packageName, language
-      | order by usageCount desc
-    `;
-    const packageResult = await client.execute(DATABASE, packageQuery);
-    const packageData = extractResults(packageResult);
-    console.log(`  Found ${packageData.length} packages`);
-
-    // Get timestamped output directory
-    const outputDir = getOutputDir();
-
-    // Write results to JSON files
-    const output = {
-      metadata: {
-        startDate,
-        endDate,
-        generatedAt: new Date().toISOString(),
-        cluster: CLUSTER_URI,
-        database: DATABASE
-      },
-      dailyUsage: dailyData,
-      clientSummary: clientData,
-      toolSummary: toolData,
-      packageUsage: packageData
-    };
-
-    const outputPath = writeOutput("telemetry.json", output, outputDir);
-    console.log(`\nTelemetry data written to ${outputPath}`);
-
-    // Print summary
-    console.log("\n=== Telemetry Summary ===");
-    console.log(`Period: ${startDate} to ${endDate}`);
-    console.log(`Total daily aggregates: ${dailyData.length}`);
-    console.log(`Unique clients: ${clientData.length}`);
-    console.log(`Unique tools: ${toolData.length}`);
-    console.log(`Packages with usage: ${packageData.length}`);
-
-    if (clientData.length > 0) {
-      console.log("\nTop 5 clients by usage:");
-      clientData.slice(0, 5).forEach((c, i) => {
-        console.log(`  ${i + 1}. ${c.clientName} v${c.clientVersion}: ${c.totalCalls} calls, ${c.distinctUsers} users`);
-      });
-    }
-
-    if (toolData.length > 0) {
-      console.log("\nTop 5 tools by usage:");
-      toolData.slice(0, 5).forEach((t, i) => {
-        console.log(`  ${i + 1}. ${t.toolName}: ${t.totalCalls} calls, ${t.successRate}% success rate`);
-      });
-    }
-
-  } catch (error) {
-    console.error("Error fetching telemetry:", error.message);
-    if (error.response?.data) {
-      console.error("Response data:", JSON.stringify(error.response.data, null, 2));
-    }
-    process.exit(1);
+/**
+ * Fetch tspconfig.yaml from azure-rest-api-specs and extract package names
+ * @param {string} typespecPath - Absolute path containing "specification/..."
+ * @returns {Promise<Map<string, string>>} Map of language -> package name
+ */
+async function fetchTspConfig(typespecPath) {
+  // Extract relative path starting from "specification/"
+  const relativePath = extractSpecificationPath(typespecPath);
+  
+  if (!relativePath) {
+    // Can't extract path, skip
+    return new Map();
   }
+  
+  if (tspConfigCache.has(relativePath)) {
+    return tspConfigCache.get(relativePath);
+  }
+
+  const packageMap = new Map();
+  
+  // Build the URL to tspconfig.yaml
+  const url = `https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/${relativePath}/tspconfig.yaml`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      if (response.status !== 404) {
+        console.log(`    Could not fetch tspconfig for ${relativePath}: ${response.status}`);
+      }
+      tspConfigCache.set(relativePath, packageMap);
+      return packageMap;
+    }
+    
+    const yamlContent = await response.text();
+    const config = yaml.load(yamlContent);
+    
+    // Extract package names from emitter options
+    // Structure varies but common patterns:
+    // options:
+    //   "@azure-tools/typespec-python":
+    //     package-name: "azure-mgmt-mongocluster"
+    //   "@azure-tools/typespec-ts":
+    //     package-name: "@azure/arm-mongocluster"
+    //   "@azure-tools/typespec-java":
+    //     package-name: "com.azure.resourcemanager.mongocluster"
+    //   "@azure-tools/typespec-csharp":
+    //     package-name: "Azure.ResourceManager.MongoCluster"
+    //   "@azure-tools/typespec-go":
+    //     module: "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/mongocluster/armmongocluster"
+    
+    if (config?.options) {
+      for (const [emitter, opts] of Object.entries(config.options)) {
+        if (!opts) continue;
+        
+        let lang = null;
+        let pkgName = null;
+        
+        // Determine language from emitter name
+        if (emitter.includes("python")) {
+          lang = "python";
+          pkgName = opts["package-name"] || opts.packageName;
+        } else if (emitter.includes("-ts") || emitter.includes("typescript")) {
+          lang = "js";
+          pkgName = opts["package-name"] || opts.packageName;
+        } else if (emitter.includes("java")) {
+          lang = "java";
+          pkgName = opts["package-name"] || opts.packageName;
+        } else if (emitter.includes("csharp") || emitter.includes("dotnet")) {
+          lang = "dotnet";
+          pkgName = opts["package-name"] || opts.packageName || opts.namespace;
+        } else if (emitter.includes("-go")) {
+          lang = "go";
+          // Go uses module path, extract package name from it
+          const modulePath = opts.module || opts["module-name"];
+          if (modulePath) {
+            // Extract last segment: github.com/.../armmongocluster -> armmongocluster
+            pkgName = modulePath.split("/").pop();
+          }
+        }
+        
+        // Validate package name - skip placeholders and invalid names
+        if (lang && pkgName) {
+          // Skip template placeholders
+          if (pkgName.includes("{") || pkgName.includes("}")) continue;
+          // Skip version-only names like "v2", "v8"
+          if (/^v\d+$/.test(pkgName)) continue;
+          // Skip empty or very short names
+          if (pkgName.length < 3) continue;
+          
+          packageMap.set(lang, pkgName);
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.log(`    Error fetching tspconfig for ${relativePath}: ${error.message}`);
+  }
+  
+  tspConfigCache.set(relativePath, packageMap);
+  return packageMap;
 }
 
 /**
@@ -240,6 +191,292 @@ function extractResults(result) {
   }
   
   return rows;
+}
+
+/**
+ * Main function to fetch telemetry data
+ */
+async function main() {
+  const { startDate, endDate } = parseArgs();
+  console.log(`Fetching telemetry from ${startDate} to ${endDate}...`);
+
+  // Connect to Kusto
+  const kcsb = KustoConnectionStringBuilder.withAzLoginIdentity(CLUSTER_URI);
+  const client = new Client(kcsb);
+
+  try {
+    // Query: Get all tool calls with package info
+    console.log("\nFetching tool usage data...");
+    const query = `
+      RawEventsDependencies
+      | where timestamp >= datetime('${startDate}') and timestamp < datetime('${endDate}')
+      | extend cd = parse_json(customDimensions)
+      | extend
+          PackageName = tostring(cd.package_name),
+          TypeSpecPath = tostring(parse_json(tostring(cd.toolargs)).typespecProjectRoot),
+          ToolName = tostring(cd.toolname),
+          ClientName = tostring(cd.clientname),
+          ClientVersion = tostring(cd.clientversion),
+          Language = tostring(cd.language),
+          OperationStatus = tostring(cd.operation_status),
+          DeviceId = tostring(cd.devdeviceid)
+      | project 
+          timestamp,
+          PackageName,
+          TypeSpecPath,
+          ToolName,
+          ClientName,
+          ClientVersion,
+          Language,
+          OperationStatus,
+          DeviceId,
+          duration
+    `;
+    
+    const result = await client.execute(DATABASE, query);
+    const rawData = extractResults(result);
+    console.log(`  Found ${rawData.length} tool calls`);
+
+    // Process data: resolve TypeSpec paths to package names where needed
+    console.log("\nProcessing package names...");
+    const typespecPaths = new Set();
+    
+    // First pass: collect unique TypeSpec paths that need resolution
+    for (const row of rawData) {
+      if (!row.PackageName && row.TypeSpecPath) {
+        const relativePath = extractSpecificationPath(row.TypeSpecPath);
+        if (relativePath) {
+          typespecPaths.add(relativePath);
+        }
+      }
+    }
+    
+    console.log(`  Found ${typespecPaths.size} unique TypeSpec paths to resolve`);
+    
+    // Fetch tspconfig for each unique path
+    if (typespecPaths.size > 0) {
+      console.log("  Fetching tspconfig.yaml files...");
+      let resolved = 0;
+      for (const path of typespecPaths) {
+        const pkgMap = await fetchTspConfig(path);
+        if (pkgMap.size > 0) resolved++;
+      }
+      console.log(`  Successfully resolved ${resolved} of ${typespecPaths.size} paths`);
+    }
+
+    // Second pass: enrich data with resolved package names
+    const toolCalls = [];
+    const packagesWithUsage = new Map(); // package -> { calls, users, tools }
+    
+    for (const row of rawData) {
+      let packageName = row.PackageName;
+      let resolvedFromTypeSpec = false;
+      
+      // If no package name but has TypeSpec path, try to resolve
+      if (!packageName && row.TypeSpecPath) {
+        const relativePath = extractSpecificationPath(row.TypeSpecPath);
+        const pkgMap = relativePath ? tspConfigCache.get(relativePath) : null;
+        if (pkgMap && row.Language) {
+          packageName = pkgMap.get(row.Language.toLowerCase());
+          resolvedFromTypeSpec = true;
+        }
+        // If still no package name but we have a map, use any available
+        if (!packageName && pkgMap && pkgMap.size > 0) {
+          // Use all package names from this TypeSpec project
+          for (const [lang, pkg] of pkgMap) {
+            const callData = {
+              ...row,
+              PackageName: pkg,
+              Language: lang,
+              ResolvedFromTypeSpec: true,
+              TypeSpecPath: row.TypeSpecPath
+            };
+            toolCalls.push(callData);
+            
+            // Track package usage
+            if (!packagesWithUsage.has(pkg)) {
+              packagesWithUsage.set(pkg, { 
+                calls: 0, 
+                users: new Set(), 
+                tools: new Set(),
+                clients: new Map(),
+                language: lang
+              });
+            }
+            const pkgData = packagesWithUsage.get(pkg);
+            pkgData.calls++;
+            if (row.DeviceId) pkgData.users.add(row.DeviceId);
+            if (row.ToolName) pkgData.tools.add(row.ToolName);
+            if (row.ClientName) {
+              const clientKey = row.ClientName;
+              pkgData.clients.set(clientKey, (pkgData.clients.get(clientKey) || 0) + 1);
+            }
+          }
+          continue; // Skip adding this row again
+        }
+      }
+      
+      // Skip if still no package name
+      if (!packageName) {
+        continue;
+      }
+      
+      const callData = {
+        ...row,
+        PackageName: packageName,
+        ResolvedFromTypeSpec: resolvedFromTypeSpec
+      };
+      toolCalls.push(callData);
+      
+      // Track package usage
+      if (!packagesWithUsage.has(packageName)) {
+        packagesWithUsage.set(packageName, { 
+          calls: 0, 
+          users: new Set(), 
+          tools: new Set(),
+          clients: new Map(),
+          language: row.Language || ""
+        });
+      }
+      const pkgData = packagesWithUsage.get(packageName);
+      pkgData.calls++;
+      if (row.DeviceId) pkgData.users.add(row.DeviceId);
+      if (row.ToolName) pkgData.tools.add(row.ToolName);
+      if (row.ClientName) {
+        const clientKey = row.ClientName;
+        pkgData.clients.set(clientKey, (pkgData.clients.get(clientKey) || 0) + 1);
+      }
+    }
+    
+    console.log(`  Processed ${toolCalls.length} calls with package names`);
+    console.log(`  Found ${packagesWithUsage.size} unique packages with MCP usage`);
+
+    // Build package summary
+    const packageSummary = [];
+    for (const [pkg, data] of packagesWithUsage) {
+      // Convert clients Map to array of {name, calls}
+      const clientsUsed = Array.from(data.clients.entries())
+        .map(([name, calls]) => ({ name, calls }))
+        .sort((a, b) => b.calls - a.calls);
+      
+      packageSummary.push({
+        packageName: pkg,
+        language: data.language,
+        callCount: data.calls,
+        userCount: data.users.size,
+        toolsUsed: Array.from(data.tools),
+        clientsUsed: clientsUsed
+      });
+    }
+    packageSummary.sort((a, b) => b.callCount - a.callCount);
+
+    // Build tool summary
+    const toolStats = new Map();
+    for (const call of toolCalls) {
+      if (!call.ToolName) continue;
+      if (!toolStats.has(call.ToolName)) {
+        toolStats.set(call.ToolName, {
+          name: call.ToolName,
+          calls: 0,
+          successes: 0,
+          failures: 0,
+          users: new Set(),
+          packages: new Set()
+        });
+      }
+      const stat = toolStats.get(call.ToolName);
+      stat.calls++;
+      if (call.OperationStatus === "Succeeded") stat.successes++;
+      if (call.OperationStatus === "Failed") stat.failures++;
+      if (call.DeviceId) stat.users.add(call.DeviceId);
+      if (call.PackageName) stat.packages.add(call.PackageName);
+    }
+    
+    const toolSummary = Array.from(toolStats.values()).map(t => ({
+      name: t.name,
+      calls: t.calls,
+      successRate: t.calls > 0 ? Math.round((t.successes / t.calls) * 100) : 0,
+      userCount: t.users.size,
+      packageCount: t.packages.size
+    })).sort((a, b) => b.calls - a.calls);
+
+    // Build client summary
+    const clientStats = new Map();
+    for (const call of rawData) { // Use rawData to get all calls including those without package
+      const key = `${call.ClientName}|${call.ClientVersion}`;
+      if (!clientStats.has(key)) {
+        clientStats.set(key, {
+          name: call.ClientName,
+          version: call.ClientVersion,
+          calls: 0,
+          users: new Set()
+        });
+      }
+      const stat = clientStats.get(key);
+      stat.calls++;
+      if (call.DeviceId) stat.users.add(call.DeviceId);
+    }
+    
+    const clientSummary = Array.from(clientStats.values()).map(c => ({
+      name: c.name,
+      version: c.version,
+      calls: c.calls,
+      userCount: c.users.size
+    })).sort((a, b) => b.calls - a.calls);
+
+    // Get output directory
+    const outputDir = getOutputDir();
+
+    // Write results
+    const output = {
+      metadata: {
+        startDate,
+        endDate,
+        generatedAt: new Date().toISOString(),
+        cluster: CLUSTER_URI,
+        database: DATABASE,
+        totalRawCalls: rawData.length,
+        callsWithPackage: toolCalls.length,
+        typespecPathsResolved: typespecPaths.size
+      },
+      packageSummary,
+      toolSummary,
+      clientSummary
+    };
+
+    const outputPath = writeOutput("telemetry.json", output, outputDir);
+    console.log(`\nTelemetry data written to ${outputPath}`);
+
+    // Print summary
+    console.log("\n=== Telemetry Summary ===");
+    console.log(`Period: ${startDate} to ${endDate}`);
+    console.log(`Total raw calls: ${rawData.length}`);
+    console.log(`Calls with package name: ${toolCalls.length}`);
+    console.log(`Unique packages: ${packagesWithUsage.size}`);
+    console.log(`Unique tools: ${toolSummary.length}`);
+    console.log(`Unique clients: ${clientSummary.length}`);
+
+    if (packageSummary.length > 0) {
+      console.log("\nTop 10 packages by MCP usage:");
+      packageSummary.slice(0, 10).forEach((p, i) => {
+        console.log(`  ${i + 1}. ${p.packageName} (${p.language}): ${p.callCount} calls, ${p.userCount} users`);
+      });
+    }
+
+    if (toolSummary.length > 0) {
+      console.log("\nTop 5 tools:");
+      toolSummary.slice(0, 5).forEach((t, i) => {
+        console.log(`  ${i + 1}. ${t.name}: ${t.calls} calls, ${t.successRate}% success`);
+      });
+    }
+
+  } catch (error) {
+    console.error("Error fetching telemetry:", error.message);
+    if (error.stack) {
+      console.error(error.stack);
+    }
+    process.exit(1);
+  }
 }
 
 main().catch(console.error);
