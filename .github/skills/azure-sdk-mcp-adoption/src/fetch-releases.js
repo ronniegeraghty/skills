@@ -1,33 +1,37 @@
 /**
- * Fetch Azure SDK release data from GitHub
+ * Fetch Azure SDK Release Data from GitHub
  * 
- * Downloads monthly release YAML files from the Azure/azure-sdk repository.
- * Classifies releases as GA (stable) or Beta based on version patterns.
+ * Downloads monthly release YAML files from the Azure/azure-sdk repository
+ * and enriches them with TypeSpec location data for correlation.
+ * 
+ * Key responsibilities:
+ * - Fetch monthly release data for all supported languages
+ * - Classify releases as GA (stable) or Beta
+ * - Classify releases as Management plane or Data plane
+ * - Fetch tsp-location.yaml to build TypeSpec path mappings
+ * 
+ * @module fetch-releases
  */
 
 import yaml from "js-yaml";
+import { GITHUB_RAW_BASE, SUPPORTED_LANGUAGES } from "./constants.js";
 import { getOutputDir, writeOutput } from "./utils.js";
 
-const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases";
-
-// Supported languages for release data
-const LANGUAGES = ["js", "python", "dotnet", "java", "go", "cpp", "c", "ios", "android"];
+// -----------------------------------------------------------------------------
+// Version Classification
+// -----------------------------------------------------------------------------
 
 /**
  * Determine if a version is Beta or GA (stable)
  * 
  * Beta patterns (case-insensitive):
- * - Contains "-beta" (e.g., 2.1.0-beta.2)
- * - Contains "-preview" (e.g., 1.0.0-preview.1)
- * - Contains "-alpha" (e.g., 1.0.0-alpha.1)
- * - Contains "-rc" (e.g., 1.0.0-rc.1)
- * - Python: contains "b" followed by digits (e.g., 1.0.0b3, 2.0.0b1)
- * - Python: contains "a" followed by digits for alpha (e.g., 1.0.0a1)
+ * - Contains "-beta", "-preview", "-alpha", "-rc"
+ * - Python: ends with "b" or "a" followed by digits (e.g., 1.0.0b3)
  * 
- * Everything else is GA (stable), including patch releases like 6.0.2
+ * Everything else is GA, including patch releases like 6.0.2
  * 
  * @param {string} version - The version string
- * @returns {"GA" | "Beta"}
+ * @returns {"GA" | "Beta"} Version classification
  */
 function classifyVersion(version) {
   if (!version) return "GA";
@@ -52,16 +56,18 @@ function classifyVersion(version) {
   return "GA";
 }
 
+// -----------------------------------------------------------------------------
+// Plane Classification
+// -----------------------------------------------------------------------------
+
 /**
  * Determine if package is management plane or data plane
  * 
  * Management plane patterns:
- * - Contains "mgmt" or "management"
- * - Contains "arm-" prefix
- * - Contains "resourcemanager"
+ * - Contains "mgmt", "management", "arm-", or "resourcemanager"
  * 
  * @param {string} packageName - The package name
- * @returns {"Management" | "Data"}
+ * @returns {"Management" | "Data"} Plane classification
  */
 function classifyPlane(packageName) {
   if (!packageName) return "Data";
@@ -78,14 +84,27 @@ function classifyPlane(packageName) {
   return "Data";
 }
 
+// -----------------------------------------------------------------------------
+// Argument Parsing
+// -----------------------------------------------------------------------------
+
 /**
- * Parse command line arguments
+ * Parse command line arguments for release fetching
+ * 
+ * Supported arguments:
+ *   --month YYYY-MM      Month to fetch releases for (can be specified multiple times)
+ *   --language js,python Comma-separated list of languages to fetch
+ * 
+ * Defaults:
+ *   months = [current month]
+ *   languages = all supported languages
+ * 
  * @returns {{ months: string[], languages: string[] }}
  */
 function parseArgs() {
   const args = process.argv.slice(2);
   let months = [];
-  let languages = [...LANGUAGES];
+  let languages = [...SUPPORTED_LANGUAGES];
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--month" && args[i + 1]) {
@@ -105,10 +124,18 @@ function parseArgs() {
   return { months, languages };
 }
 
+// -----------------------------------------------------------------------------
+// HTTP Fetching
+// -----------------------------------------------------------------------------
+
 /**
  * Fetch a URL and return the response text
- * @param {string} url 
- * @returns {Promise<string|null>}
+ * 
+ * Handles 404 responses gracefully (returns null) since not all
+ * language/month combinations have release data.
+ * 
+ * @param {string} url - URL to fetch
+ * @returns {Promise<string|null>} Response text, or null if not found/error
  */
 async function fetchUrl(url) {
   try {
@@ -126,11 +153,85 @@ async function fetchUrl(url) {
   }
 }
 
+// -----------------------------------------------------------------------------
+// TypeSpec Location Functions
+// -----------------------------------------------------------------------------
+
+/**
+ * Build the tsp-location.yaml URL from a ChangelogUrl
+ * 
+ * Release entries include a ChangelogUrl pointing to the package's CHANGELOG.md.
+ * The tsp-location.yaml file (if it exists) is in the same directory.
+ * 
+ * @example
+ * // Input
+ * "https://github.com/Azure/azure-sdk-for-net/tree/Azure.ResourceManager.FileShares_1.0.0-beta.1/sdk/fileshares/Azure.ResourceManager.FileShares/CHANGELOG.md"
+ * // Output  
+ * "https://raw.githubusercontent.com/Azure/azure-sdk-for-net/Azure.ResourceManager.FileShares_1.0.0-beta.1/sdk/fileshares/Azure.ResourceManager.FileShares/tsp-location.yaml"
+ * 
+ * @param {string} changelogUrl - URL to CHANGELOG.md in the release
+ * @returns {string|null} URL to tsp-location.yaml, or null if URL format not recognized
+ */
+function getTspLocationUrl(changelogUrl) {
+  if (!changelogUrl) return null;
+  
+  // Parse the URL to extract branch/tag and path
+  // Format: https://github.com/{owner}/{repo}/tree/{ref}/{path}/CHANGELOG.md
+  const match = changelogUrl.match(
+    /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)\/CHANGELOG\.md$/i
+  );
+  
+  if (!match) return null;
+  
+  const [, owner, repo, ref, path] = match;
+  
+  // Build the raw GitHub URL for tsp-location.yaml
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}/tsp-location.yaml`;
+}
+
+/**
+ * Fetch tsp-location.yaml for a release and extract the directory property
+ * 
+ * The directory property contains the TypeSpec specification path, which can
+ * be used to correlate with telemetry that only has TypeSpec paths.
+ * 
+ * @param {string} changelogUrl - URL to CHANGELOG.md in the release
+ * @returns {Promise<string|null>} TypeSpec directory path, or null if not found
+ */
+async function fetchTspLocation(changelogUrl) {
+  const tspLocationUrl = getTspLocationUrl(changelogUrl);
+  if (!tspLocationUrl) return null;
+  
+  const yamlContent = await fetchUrl(tspLocationUrl);
+  if (!yamlContent) return null;
+  
+  try {
+    const data = yaml.load(yamlContent);
+    if (data && data.directory) {
+      // Normalize the directory path to match typespec paths in telemetry
+      // The directory is usually like: specification/fileshares/resource-manager/Microsoft.FileShares/FileShares
+      return data.directory;
+    }
+  } catch (error) {
+    // YAML parsing failed - silently skip
+  }
+  
+  return null;
+}
+
+// -----------------------------------------------------------------------------
+// Release Fetching
+// -----------------------------------------------------------------------------
+
 /**
  * Fetch monthly release YAML for a language
- * @param {string} month - Format: YYYY-MM
- * @param {string} language 
- * @returns {Promise<object[]>}
+ * 
+ * Downloads and parses the release YAML file from GitHub, then transforms
+ * each entry with proper classification.
+ * 
+ * @param {string} month - Month in YYYY-MM format
+ * @param {string} language - Language identifier (js, python, dotnet, etc.)
+ * @returns {Promise<Object[]>} Array of processed release objects
  */
 async function fetchMonthlyReleases(month, language) {
   const url = `${GITHUB_RAW_BASE}/${month}/${language}.yml`;
@@ -162,7 +263,9 @@ async function fetchMonthlyReleases(month, language) {
         language,
         releaseMonth: month,
         // Keep original VersionType for reference
-        originalVersionType: entry.VersionType || ""
+        originalVersionType: entry.VersionType || "",
+        // Include ChangelogUrl for tsp-location lookup
+        changelogUrl: entry.ChangelogUrl || ""
       };
     });
   } catch (error) {
@@ -171,18 +274,127 @@ async function fetchMonthlyReleases(month, language) {
   }
 }
 
+// -----------------------------------------------------------------------------
+// TypeSpec Mapping
+// -----------------------------------------------------------------------------
+
 /**
- * Main function to fetch release data
+ * Fetch TypeSpec locations for all releases and build a mapping
+ * 
+ * For each release with a ChangelogUrl, attempts to fetch tsp-location.yaml
+ * and extract the TypeSpec directory. This builds a mapping from TypeSpec
+ * paths to package names for correlation with telemetry.
+ * 
+ * @param {Object[]} releases - Array of release objects with changelogUrl
+ * @returns {Promise<Map<string, Object[]>>} Map of normalized TypeSpec path to package info
+ */
+async function buildTypespecMapping(releases) {
+  const typespecToPackages = new Map();
+  const releasesWithChangelog = releases.filter(r => r.changelogUrl);
+  
+  console.log(`  Found ${releasesWithChangelog.length} releases with ChangelogUrl`);
+  
+  let fetched = 0;
+  let found = 0;
+
+  for (const release of releasesWithChangelog) {
+    const typespecDir = await fetchTspLocation(release.changelogUrl);
+    fetched++;
+    
+    if (typespecDir) {
+      found++;
+      const normalizedPath = typespecDir.replace(/\\/g, "/").toLowerCase();
+      
+      if (!typespecToPackages.has(normalizedPath)) {
+        typespecToPackages.set(normalizedPath, []);
+      }
+      typespecToPackages.get(normalizedPath).push({
+        packageName: release.packageName,
+        language: release.language,
+        version: release.version,
+        releaseMonth: release.releaseMonth
+      });
+      
+      // Add typespec directory to the release object
+      release.typespecDirectory = typespecDir;
+    }
+    
+    // Progress indicator every 50 releases
+    if (fetched % 50 === 0) {
+      console.log(`    Processed ${fetched}/${releasesWithChangelog.length} releases...`);
+    }
+  }
+
+  console.log(`  Fetched ${fetched} tsp-location.yaml files`);
+  console.log(`  Found ${found} with typespec directories`);
+  console.log(`  Unique typespec paths: ${typespecToPackages.size}`);
+
+  return typespecToPackages;
+}
+
+// -----------------------------------------------------------------------------
+// Console Output
+// -----------------------------------------------------------------------------
+
+/**
+ * Print release summary to console
+ */
+function printSummary(releases) {
+  console.log(`Total releases: ${releases.length}`);
+  
+  // By language
+  const byLang = {};
+  for (const release of releases) {
+    byLang[release.language] = (byLang[release.language] || 0) + 1;
+  }
+  console.log("\nReleases by language:");
+  for (const [lang, count] of Object.entries(byLang).sort((a, b) => b[1] - a[1])) {
+    console.log(`  ${lang}: ${count}`);
+  }
+
+  // By version type
+  const byType = { GA: 0, Beta: 0 };
+  for (const release of releases) {
+    byType[release.versionType]++;
+  }
+  console.log("\nReleases by type:");
+  console.log(`  GA (stable): ${byType.GA}`);
+  console.log(`  Beta (preview): ${byType.Beta}`);
+
+  // By plane
+  const byPlane = { Management: 0, Data: 0 };
+  for (const release of releases) {
+    byPlane[release.plane]++;
+  }
+  console.log("\nReleases by plane:");
+  console.log(`  Management: ${byPlane.Management}`);
+  console.log(`  Data: ${byPlane.Data}`);
+
+  // Sample releases
+  if (releases.length > 0) {
+    console.log("\nSample releases:");
+    releases.slice(0, 5).forEach((r, i) => {
+      console.log(`  ${i + 1}. ${r.packageName} v${r.version} (${r.language}, ${r.versionType}, ${r.plane})`);
+    });
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Main Entry Point
+// -----------------------------------------------------------------------------
+
+/**
+ * Main function - fetches release data and writes to output
  */
 async function main() {
   const { months, languages } = parseArgs();
   console.log(`Fetching releases for months: ${months.join(", ")}`);
   console.log(`Languages: ${languages.join(", ")}`);
 
-  const allReleases = [];
-
   // Fetch monthly releases for each language and month
+  const allReleases = [];
   console.log("\n=== Fetching Monthly Releases ===");
+  
   for (const month of months) {
     console.log(`\nMonth: ${month}`);
     for (const lang of languages) {
@@ -194,17 +406,29 @@ async function main() {
     }
   }
 
-  // Get output directory
-  const outputDir = getOutputDir();
+  // Fetch TypeSpec locations and build mapping
+  console.log("\n=== Fetching TypeSpec Locations ===");
+  const typespecToPackages = await buildTypespecMapping(allReleases);
 
-  // Build output
+  // Convert mapping to serializable format
+  const typespecMapping = {};
+  for (const [path, packages] of typespecToPackages) {
+    typespecMapping[path] = packages;
+  }
+
+  // Build and write output
+  const outputDir = getOutputDir();
   const output = {
     metadata: {
       months,
       languages,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
+      tspLocationsFetched: allReleases.filter(r => r.changelogUrl).length,
+      tspLocationsFound: Object.keys(typespecMapping).length,
+      uniqueTypespecPaths: typespecToPackages.size
     },
-    releases: allReleases
+    releases: allReleases,
+    typespecMapping
   };
 
   const outputPath = writeOutput("releases.json", output, outputDir);
@@ -212,43 +436,7 @@ async function main() {
 
   // Print summary
   console.log("\n=== Release Summary ===");
-  console.log(`Total releases: ${allReleases.length}`);
-  
-  // Group by language
-  const byLang = {};
-  for (const release of allReleases) {
-    byLang[release.language] = (byLang[release.language] || 0) + 1;
-  }
-  console.log("\nReleases by language:");
-  for (const [lang, count] of Object.entries(byLang).sort((a, b) => b[1] - a[1])) {
-    console.log(`  ${lang}: ${count}`);
-  }
-
-  // Group by version type (GA vs Beta)
-  const byType = { GA: 0, Beta: 0 };
-  for (const release of allReleases) {
-    byType[release.versionType]++;
-  }
-  console.log("\nReleases by type:");
-  console.log(`  GA (stable): ${byType.GA}`);
-  console.log(`  Beta (preview): ${byType.Beta}`);
-
-  // Group by plane
-  const byPlane = { Management: 0, Data: 0 };
-  for (const release of allReleases) {
-    byPlane[release.plane]++;
-  }
-  console.log("\nReleases by plane:");
-  console.log(`  Management: ${byPlane.Management}`);
-  console.log(`  Data: ${byPlane.Data}`);
-
-  // Sample releases
-  if (allReleases.length > 0) {
-    console.log("\nSample releases:");
-    allReleases.slice(0, 5).forEach((r, i) => {
-      console.log(`  ${i + 1}. ${r.packageName} v${r.version} (${r.language}, ${r.versionType}, ${r.plane})`);
-    });
-  }
+  printSummary(allReleases);
 }
 
 main().catch(console.error);

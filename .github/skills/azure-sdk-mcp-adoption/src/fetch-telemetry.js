@@ -1,22 +1,33 @@
 /**
- * Fetch MCP tool usage telemetry from Kusto
+ * Fetch MCP Tool Usage Telemetry from Kusto
  * 
- * Queries the AzSdkToolsMcp database to get tool usage data.
- * Resolves package names from TypeSpec project paths when needed.
+ * Queries the Azure SDK MCP telemetry database to collect:
+ * - Tool usage by package name (direct correlation with releases)
+ * - Tool usage by TypeSpec path (for packages without explicit names)
+ * - Tool and client usage statistics
+ * 
+ * @module fetch-telemetry
  */
 
 import { Client, KustoConnectionStringBuilder } from "azure-kusto-data";
-import yaml from "js-yaml";
+import { KUSTO_CLUSTER_URI, KUSTO_DATABASE } from "./constants.js";
 import { getOutputDir, writeOutput } from "./utils.js";
 
-const CLUSTER_URI = "https://ddazureclients.kusto.windows.net";
-const DATABASE = "AzSdkToolsMcp";
-
-// Cache for tspconfig lookups to avoid repeated fetches
-const tspConfigCache = new Map();
+// -----------------------------------------------------------------------------
+// Argument Parsing
+// -----------------------------------------------------------------------------
 
 /**
- * Parse command line arguments
+ * Parse command line arguments for telemetry date range
+ * 
+ * Supported arguments:
+ *   --start YYYY-MM-DD  Start date for telemetry query
+ *   --end YYYY-MM-DD    End date for telemetry query
+ * 
+ * Defaults:
+ *   end = 17th of current month (end of release cycle)
+ *   start = 3 months before end date
+ * 
  * @returns {{ startDate: string, endDate: string }}
  */
 function parseArgs() {
@@ -47,16 +58,28 @@ function parseArgs() {
   return { startDate, endDate };
 }
 
+// -----------------------------------------------------------------------------
+// Path Extraction
+// -----------------------------------------------------------------------------
+
 /**
  * Extract the relative specification path from an absolute TypeSpec project path
- * Examples:
- *   "/home/runner/work/azure-rest-api-specs/azure-rest-api-specs/specification/mongocluster/..." 
- *   -> "specification/mongocluster/..."
- *   "c:\Users\...\azure-rest-api-specs\specification\dell\Dell.Storage.Management"
- *   -> "specification/dell/Dell.Storage.Management"
  * 
- * @param {string} absolutePath 
- * @returns {string|null}
+ * TypeSpec project paths in telemetry include full filesystem paths. This function
+ * extracts just the specification-relative portion for matching with releases.
+ * 
+ * @example
+ * // Linux CI path
+ * extractSpecificationPath("/home/runner/work/azure-rest-api-specs/azure-rest-api-specs/specification/mongocluster/...")
+ * // Returns: "specification/mongocluster/..."
+ * 
+ * @example
+ * // Windows local path
+ * extractSpecificationPath("c:\\Users\\dev\\azure-rest-api-specs\\specification\\dell\\Dell.Storage.Management")
+ * // Returns: "specification/dell/Dell.Storage.Management"
+ * 
+ * @param {string} absolutePath - Full filesystem path to TypeSpec project
+ * @returns {string|null} Relative path starting with "specification/", or null if not found
  */
 function extractSpecificationPath(absolutePath) {
   if (!absolutePath) return null;
@@ -71,112 +94,18 @@ function extractSpecificationPath(absolutePath) {
   return normalized.substring(specIndex);
 }
 
-/**
- * Fetch tspconfig.yaml from azure-rest-api-specs and extract package names
- * @param {string} typespecPath - Absolute path containing "specification/..."
- * @returns {Promise<Map<string, string>>} Map of language -> package name
- */
-async function fetchTspConfig(typespecPath) {
-  // Extract relative path starting from "specification/"
-  const relativePath = extractSpecificationPath(typespecPath);
-  
-  if (!relativePath) {
-    // Can't extract path, skip
-    return new Map();
-  }
-  
-  if (tspConfigCache.has(relativePath)) {
-    return tspConfigCache.get(relativePath);
-  }
-
-  const packageMap = new Map();
-  
-  // Build the URL to tspconfig.yaml
-  const url = `https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/${relativePath}/tspconfig.yaml`;
-  
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status !== 404) {
-        console.log(`    Could not fetch tspconfig for ${relativePath}: ${response.status}`);
-      }
-      tspConfigCache.set(relativePath, packageMap);
-      return packageMap;
-    }
-    
-    const yamlContent = await response.text();
-    const config = yaml.load(yamlContent);
-    
-    // Extract package names from emitter options
-    // Structure varies but common patterns:
-    // options:
-    //   "@azure-tools/typespec-python":
-    //     package-name: "azure-mgmt-mongocluster"
-    //   "@azure-tools/typespec-ts":
-    //     package-name: "@azure/arm-mongocluster"
-    //   "@azure-tools/typespec-java":
-    //     package-name: "com.azure.resourcemanager.mongocluster"
-    //   "@azure-tools/typespec-csharp":
-    //     package-name: "Azure.ResourceManager.MongoCluster"
-    //   "@azure-tools/typespec-go":
-    //     module: "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/mongocluster/armmongocluster"
-    
-    if (config?.options) {
-      for (const [emitter, opts] of Object.entries(config.options)) {
-        if (!opts) continue;
-        
-        let lang = null;
-        let pkgName = null;
-        
-        // Determine language from emitter name
-        if (emitter.includes("python")) {
-          lang = "python";
-          pkgName = opts["package-name"] || opts.packageName;
-        } else if (emitter.includes("-ts") || emitter.includes("typescript")) {
-          lang = "js";
-          pkgName = opts["package-name"] || opts.packageName;
-        } else if (emitter.includes("java")) {
-          lang = "java";
-          pkgName = opts["package-name"] || opts.packageName;
-        } else if (emitter.includes("csharp") || emitter.includes("dotnet")) {
-          lang = "dotnet";
-          pkgName = opts["package-name"] || opts.packageName || opts.namespace;
-        } else if (emitter.includes("-go")) {
-          lang = "go";
-          // Go uses module path, extract package name from it
-          const modulePath = opts.module || opts["module-name"];
-          if (modulePath) {
-            // Extract last segment: github.com/.../armmongocluster -> armmongocluster
-            pkgName = modulePath.split("/").pop();
-          }
-        }
-        
-        // Validate package name - skip placeholders and invalid names
-        if (lang && pkgName) {
-          // Skip template placeholders
-          if (pkgName.includes("{") || pkgName.includes("}")) continue;
-          // Skip version-only names like "v2", "v8"
-          if (/^v\d+$/.test(pkgName)) continue;
-          // Skip empty or very short names
-          if (pkgName.length < 3) continue;
-          
-          packageMap.set(lang, pkgName);
-        }
-      }
-    }
-    
-  } catch (error) {
-    console.log(`    Error fetching tspconfig for ${relativePath}: ${error.message}`);
-  }
-  
-  tspConfigCache.set(relativePath, packageMap);
-  return packageMap;
-}
+// -----------------------------------------------------------------------------
+// Kusto Result Processing
+// -----------------------------------------------------------------------------
 
 /**
- * Extract results from Kusto query response
- * @param {any} result - Kusto query result
- * @returns {any[]} - Array of result objects
+ * Extract row objects from a Kusto query result
+ * 
+ * Converts Kusto's tabular result format into an array of plain objects
+ * with column names as keys.
+ * 
+ * @param {Object} result - Kusto query result from client.execute()
+ * @returns {Object[]} Array of row objects
  */
 function extractResults(result) {
   const table = result.primaryResults[0];
@@ -193,19 +122,185 @@ function extractResults(result) {
   return rows;
 }
 
+// -----------------------------------------------------------------------------
+// Data Processing Functions
+// -----------------------------------------------------------------------------
+
 /**
- * Main function to fetch telemetry data
+ * Process raw telemetry rows into package-level summaries
+ * @param {Object[]} rawData - Raw Kusto query results
+ * @returns {{ callsWithPackage: Object[], packagesWithUsage: Map }}
+ */
+function processPackageData(rawData) {
+  const callsWithPackage = [];
+  const packagesWithUsage = new Map();
+  
+  for (const row of rawData) {
+    const hasPackage = row.PackageName && row.PackageName.trim() !== "";
+    if (!hasPackage) continue;
+    
+    callsWithPackage.push(row);
+    
+    const packageName = row.PackageName;
+    if (!packagesWithUsage.has(packageName)) {
+      packagesWithUsage.set(packageName, { 
+        calls: 0, 
+        users: new Set(), 
+        tools: new Set(),
+        clients: new Map(),
+        language: row.Language || ""
+      });
+    }
+    const pkgData = packagesWithUsage.get(packageName);
+    pkgData.calls++;
+    if (row.DeviceId) pkgData.users.add(row.DeviceId);
+    if (row.ToolName) pkgData.tools.add(row.ToolName);
+    if (row.ClientName) {
+      const clientKey = row.ClientName;
+      pkgData.clients.set(clientKey, (pkgData.clients.get(clientKey) || 0) + 1);
+    }
+  }
+  
+  return { callsWithPackage, packagesWithUsage };
+}
+
+/**
+ * Process raw telemetry rows into TypeSpec path summaries
+ * (for calls without package names but with TypeSpec paths)
+ * @param {Object[]} rawData - Raw Kusto query results
+ * @returns {{ callsWithTypespecOnly: Object[], typespecPathSummary: Map }}
+ */
+function processTypespecData(rawData) {
+  const callsWithTypespecOnly = [];
+  const typespecPathSummary = new Map();
+  
+  for (const row of rawData) {
+    const hasPackage = row.PackageName && row.PackageName.trim() !== "";
+    const hasTypespecPath = row.TypeSpecPath && row.TypeSpecPath.trim() !== "";
+    
+    if (hasPackage || !hasTypespecPath) continue;
+    
+    callsWithTypespecOnly.push(row);
+    
+    const relativePath = extractSpecificationPath(row.TypeSpecPath);
+    if (!relativePath) continue;
+    
+    const normalizedPath = relativePath.toLowerCase();
+    
+    if (!typespecPathSummary.has(normalizedPath)) {
+      typespecPathSummary.set(normalizedPath, {
+        calls: 0,
+        users: new Set(),
+        tools: new Set(),
+        clients: new Map(),
+        rawPath: relativePath,
+        languages: new Set()
+      });
+    }
+    const pathData = typespecPathSummary.get(normalizedPath);
+    pathData.calls++;
+    if (row.DeviceId) pathData.users.add(row.DeviceId);
+    if (row.ToolName) pathData.tools.add(row.ToolName);
+    if (row.Language) pathData.languages.add(row.Language);
+    if (row.ClientName) {
+      const clientKey = row.ClientName;
+      pathData.clients.set(clientKey, (pathData.clients.get(clientKey) || 0) + 1);
+    }
+  }
+  
+  return { callsWithTypespecOnly, typespecPathSummary };
+}
+
+/**
+ * Build tool usage statistics from calls with package names
+ * @param {Object[]} callsWithPackage - Telemetry rows with package names
+ * @returns {Object[]} Tool summary array sorted by call count
+ */
+function buildToolSummary(callsWithPackage) {
+  const toolStats = new Map();
+  
+  for (const call of callsWithPackage) {
+    if (!call.ToolName) continue;
+    
+    if (!toolStats.has(call.ToolName)) {
+      toolStats.set(call.ToolName, {
+        name: call.ToolName,
+        calls: 0,
+        successes: 0,
+        failures: 0,
+        users: new Set(),
+        packages: new Set()
+      });
+    }
+    const stat = toolStats.get(call.ToolName);
+    stat.calls++;
+    if (call.OperationStatus === "Succeeded") stat.successes++;
+    if (call.OperationStatus === "Failed") stat.failures++;
+    if (call.DeviceId) stat.users.add(call.DeviceId);
+    if (call.PackageName) stat.packages.add(call.PackageName);
+  }
+  
+  return Array.from(toolStats.values())
+    .map(t => ({
+      name: t.name,
+      calls: t.calls,
+      successRate: t.calls > 0 ? Math.round((t.successes / t.calls) * 100) : 0,
+      userCount: t.users.size,
+      packageCount: t.packages.size
+    }))
+    .sort((a, b) => b.calls - a.calls);
+}
+
+/**
+ * Build MCP client usage statistics
+ * @param {Object[]} rawData - All raw telemetry rows
+ * @returns {Object[]} Client summary array sorted by call count
+ */
+function buildClientSummary(rawData) {
+  const clientStats = new Map();
+  
+  for (const call of rawData) {
+    const key = `${call.ClientName}|${call.ClientVersion}`;
+    if (!clientStats.has(key)) {
+      clientStats.set(key, {
+        name: call.ClientName,
+        version: call.ClientVersion,
+        calls: 0,
+        users: new Set()
+      });
+    }
+    const stat = clientStats.get(key);
+    stat.calls++;
+    if (call.DeviceId) stat.users.add(call.DeviceId);
+  }
+  
+  return Array.from(clientStats.values())
+    .map(c => ({
+      name: c.name,
+      version: c.version,
+      calls: c.calls,
+      userCount: c.users.size
+    }))
+    .sort((a, b) => b.calls - a.calls);
+}
+
+// -----------------------------------------------------------------------------
+// Main Entry Point
+// -----------------------------------------------------------------------------
+
+/**
+ * Main function - fetches telemetry data from Kusto and writes to output
  */
 async function main() {
   const { startDate, endDate } = parseArgs();
   console.log(`Fetching telemetry from ${startDate} to ${endDate}...`);
 
-  // Connect to Kusto
-  const kcsb = KustoConnectionStringBuilder.withAzLoginIdentity(CLUSTER_URI);
+  // Connect to Kusto using Azure CLI authentication
+  const kcsb = KustoConnectionStringBuilder.withAzLoginIdentity(KUSTO_CLUSTER_URI);
   const client = new Client(kcsb);
 
   try {
-    // Query: Get all tool calls with package info
+    // Query for all tool calls with relevant fields
     console.log("\nFetching tool usage data...");
     const query = `
       RawEventsDependencies
@@ -233,213 +328,70 @@ async function main() {
           duration
     `;
     
-    const result = await client.execute(DATABASE, query);
+    const result = await client.execute(KUSTO_DATABASE, query);
     const rawData = extractResults(result);
     console.log(`  Found ${rawData.length} tool calls`);
 
-    // Process data: resolve TypeSpec paths to package names where needed
-    console.log("\nProcessing package names...");
-    const typespecPaths = new Set();
+    // Process data into summaries
+    console.log("\nProcessing telemetry data...");
     
-    // First pass: collect unique TypeSpec paths that need resolution
-    for (const row of rawData) {
-      if (!row.PackageName && row.TypeSpecPath) {
-        const relativePath = extractSpecificationPath(row.TypeSpecPath);
-        if (relativePath) {
-          typespecPaths.add(relativePath);
-        }
-      }
-    }
+    const { callsWithPackage, packagesWithUsage } = processPackageData(rawData);
+    const { callsWithTypespecOnly, typespecPathSummary } = processTypespecData(rawData);
     
-    console.log(`  Found ${typespecPaths.size} unique TypeSpec paths to resolve`);
-    
-    // Fetch tspconfig for each unique path
-    if (typespecPaths.size > 0) {
-      console.log("  Fetching tspconfig.yaml files...");
-      let resolved = 0;
-      for (const path of typespecPaths) {
-        const pkgMap = await fetchTspConfig(path);
-        if (pkgMap.size > 0) resolved++;
-      }
-      console.log(`  Successfully resolved ${resolved} of ${typespecPaths.size} paths`);
-    }
+    console.log(`  Calls with package name: ${callsWithPackage.length}`);
+    console.log(`  Calls with typespec path only: ${callsWithTypespecOnly.length}`);
+    console.log(`  Unique packages: ${packagesWithUsage.size}`);
+    console.log(`  Unique typespec paths: ${typespecPathSummary.size}`);
 
-    // Second pass: enrich data with resolved package names
-    const toolCalls = [];
-    const packagesWithUsage = new Map(); // package -> { calls, users, tools }
-    
-    for (const row of rawData) {
-      let packageName = row.PackageName;
-      let resolvedFromTypeSpec = false;
-      
-      // If no package name but has TypeSpec path, try to resolve
-      if (!packageName && row.TypeSpecPath) {
-        const relativePath = extractSpecificationPath(row.TypeSpecPath);
-        const pkgMap = relativePath ? tspConfigCache.get(relativePath) : null;
-        if (pkgMap && row.Language) {
-          packageName = pkgMap.get(row.Language.toLowerCase());
-          resolvedFromTypeSpec = true;
-        }
-        // If still no package name but we have a map, use any available
-        if (!packageName && pkgMap && pkgMap.size > 0) {
-          // Use all package names from this TypeSpec project
-          for (const [lang, pkg] of pkgMap) {
-            const callData = {
-              ...row,
-              PackageName: pkg,
-              Language: lang,
-              ResolvedFromTypeSpec: true,
-              TypeSpecPath: row.TypeSpecPath
-            };
-            toolCalls.push(callData);
-            
-            // Track package usage
-            if (!packagesWithUsage.has(pkg)) {
-              packagesWithUsage.set(pkg, { 
-                calls: 0, 
-                users: new Set(), 
-                tools: new Set(),
-                clients: new Map(),
-                language: lang
-              });
-            }
-            const pkgData = packagesWithUsage.get(pkg);
-            pkgData.calls++;
-            if (row.DeviceId) pkgData.users.add(row.DeviceId);
-            if (row.ToolName) pkgData.tools.add(row.ToolName);
-            if (row.ClientName) {
-              const clientKey = row.ClientName;
-              pkgData.clients.set(clientKey, (pkgData.clients.get(clientKey) || 0) + 1);
-            }
-          }
-          continue; // Skip adding this row again
-        }
-      }
-      
-      // Skip if still no package name
-      if (!packageName) {
-        continue;
-      }
-      
-      const callData = {
-        ...row,
-        PackageName: packageName,
-        ResolvedFromTypeSpec: resolvedFromTypeSpec
-      };
-      toolCalls.push(callData);
-      
-      // Track package usage
-      if (!packagesWithUsage.has(packageName)) {
-        packagesWithUsage.set(packageName, { 
-          calls: 0, 
-          users: new Set(), 
-          tools: new Set(),
-          clients: new Map(),
-          language: row.Language || ""
-        });
-      }
-      const pkgData = packagesWithUsage.get(packageName);
-      pkgData.calls++;
-      if (row.DeviceId) pkgData.users.add(row.DeviceId);
-      if (row.ToolName) pkgData.tools.add(row.ToolName);
-      if (row.ClientName) {
-        const clientKey = row.ClientName;
-        pkgData.clients.set(clientKey, (pkgData.clients.get(clientKey) || 0) + 1);
-      }
-    }
-    
-    console.log(`  Processed ${toolCalls.length} calls with package names`);
-    console.log(`  Found ${packagesWithUsage.size} unique packages with MCP usage`);
-
-    // Build package summary
-    const packageSummary = [];
-    for (const [pkg, data] of packagesWithUsage) {
-      // Convert clients Map to array of {name, calls}
-      const clientsUsed = Array.from(data.clients.entries())
-        .map(([name, calls]) => ({ name, calls }))
-        .sort((a, b) => b.calls - a.calls);
-      
-      packageSummary.push({
+    // Build package summary (convert Sets/Maps to arrays)
+    const packageSummary = Array.from(packagesWithUsage.entries())
+      .map(([pkg, data]) => ({
         packageName: pkg,
         language: data.language,
         callCount: data.calls,
         userCount: data.users.size,
         toolsUsed: Array.from(data.tools),
-        clientsUsed: clientsUsed
-      });
-    }
-    packageSummary.sort((a, b) => b.callCount - a.callCount);
+        clientsUsed: Array.from(data.clients.entries())
+          .map(([name, calls]) => ({ name, calls }))
+          .sort((a, b) => b.calls - a.calls)
+      }))
+      .sort((a, b) => b.callCount - a.callCount);
 
-    // Build tool summary
-    const toolStats = new Map();
-    for (const call of toolCalls) {
-      if (!call.ToolName) continue;
-      if (!toolStats.has(call.ToolName)) {
-        toolStats.set(call.ToolName, {
-          name: call.ToolName,
-          calls: 0,
-          successes: 0,
-          failures: 0,
-          users: new Set(),
-          packages: new Set()
-        });
-      }
-      const stat = toolStats.get(call.ToolName);
-      stat.calls++;
-      if (call.OperationStatus === "Succeeded") stat.successes++;
-      if (call.OperationStatus === "Failed") stat.failures++;
-      if (call.DeviceId) stat.users.add(call.DeviceId);
-      if (call.PackageName) stat.packages.add(call.PackageName);
-    }
-    
-    const toolSummary = Array.from(toolStats.values()).map(t => ({
-      name: t.name,
-      calls: t.calls,
-      successRate: t.calls > 0 ? Math.round((t.successes / t.calls) * 100) : 0,
-      userCount: t.users.size,
-      packageCount: t.packages.size
-    })).sort((a, b) => b.calls - a.calls);
+    // Build typespec path summary
+    const typespecSummary = Array.from(typespecPathSummary.entries())
+      .map(([normalizedPath, data]) => ({
+        typespecPath: data.rawPath,
+        normalizedPath: normalizedPath,
+        callCount: data.calls,
+        userCount: data.users.size,
+        toolsUsed: Array.from(data.tools),
+        clientsUsed: Array.from(data.clients.entries())
+          .map(([name, calls]) => ({ name, calls }))
+          .sort((a, b) => b.calls - a.calls),
+        languages: Array.from(data.languages)
+      }))
+      .sort((a, b) => b.callCount - a.callCount);
 
-    // Build client summary
-    const clientStats = new Map();
-    for (const call of rawData) { // Use rawData to get all calls including those without package
-      const key = `${call.ClientName}|${call.ClientVersion}`;
-      if (!clientStats.has(key)) {
-        clientStats.set(key, {
-          name: call.ClientName,
-          version: call.ClientVersion,
-          calls: 0,
-          users: new Set()
-        });
-      }
-      const stat = clientStats.get(key);
-      stat.calls++;
-      if (call.DeviceId) stat.users.add(call.DeviceId);
-    }
-    
-    const clientSummary = Array.from(clientStats.values()).map(c => ({
-      name: c.name,
-      version: c.version,
-      calls: c.calls,
-      userCount: c.users.size
-    })).sort((a, b) => b.calls - a.calls);
+    // Build tool and client summaries
+    const toolSummary = buildToolSummary(callsWithPackage);
+    const clientSummary = buildClientSummary(rawData);
 
-    // Get output directory
+    // Write output
     const outputDir = getOutputDir();
-
-    // Write results
     const output = {
       metadata: {
         startDate,
         endDate,
         generatedAt: new Date().toISOString(),
-        cluster: CLUSTER_URI,
-        database: DATABASE,
+        cluster: KUSTO_CLUSTER_URI,
+        database: KUSTO_DATABASE,
         totalRawCalls: rawData.length,
-        callsWithPackage: toolCalls.length,
-        typespecPathsResolved: typespecPaths.size
+        callsWithPackage: callsWithPackage.length,
+        callsWithTypespecOnly: callsWithTypespecOnly.length,
+        uniqueTypespecPaths: typespecPathSummary.size
       },
       packageSummary,
+      typespecSummary,
       toolSummary,
       clientSummary
     };
@@ -448,27 +400,8 @@ async function main() {
     console.log(`\nTelemetry data written to ${outputPath}`);
 
     // Print summary
-    console.log("\n=== Telemetry Summary ===");
-    console.log(`Period: ${startDate} to ${endDate}`);
-    console.log(`Total raw calls: ${rawData.length}`);
-    console.log(`Calls with package name: ${toolCalls.length}`);
-    console.log(`Unique packages: ${packagesWithUsage.size}`);
-    console.log(`Unique tools: ${toolSummary.length}`);
-    console.log(`Unique clients: ${clientSummary.length}`);
-
-    if (packageSummary.length > 0) {
-      console.log("\nTop 10 packages by MCP usage:");
-      packageSummary.slice(0, 10).forEach((p, i) => {
-        console.log(`  ${i + 1}. ${p.packageName} (${p.language}): ${p.callCount} calls, ${p.userCount} users`);
-      });
-    }
-
-    if (toolSummary.length > 0) {
-      console.log("\nTop 5 tools:");
-      toolSummary.slice(0, 5).forEach((t, i) => {
-        console.log(`  ${i + 1}. ${t.name}: ${t.calls} calls, ${t.successRate}% success`);
-      });
-    }
+    printSummary(startDate, endDate, rawData, callsWithPackage, callsWithTypespecOnly, 
+                 packagesWithUsage, typespecPathSummary, packageSummary, typespecSummary, toolSummary);
 
   } catch (error) {
     console.error("Error fetching telemetry:", error.message);
@@ -476,6 +409,42 @@ async function main() {
       console.error(error.stack);
     }
     process.exit(1);
+  }
+}
+
+/**
+ * Print a summary of the fetched telemetry to the console
+ */
+function printSummary(startDate, endDate, rawData, callsWithPackage, callsWithTypespecOnly,
+                      packagesWithUsage, typespecPathSummary, packageSummary, typespecSummary, toolSummary) {
+  console.log("\n=== Telemetry Summary ===");
+  console.log(`Period: ${startDate} to ${endDate}`);
+  console.log(`Total raw calls: ${rawData.length}`);
+  console.log(`Calls with package name: ${callsWithPackage.length}`);
+  console.log(`Calls with typespec path only: ${callsWithTypespecOnly.length}`);
+  console.log(`Unique packages: ${packagesWithUsage.size}`);
+  console.log(`Unique typespec paths: ${typespecPathSummary.size}`);
+  console.log(`Unique tools: ${toolSummary.length}`);
+
+  if (packageSummary.length > 0) {
+    console.log("\nTop 10 packages by MCP usage:");
+    packageSummary.slice(0, 10).forEach((p, i) => {
+      console.log(`  ${i + 1}. ${p.packageName} (${p.language}): ${p.callCount} calls, ${p.userCount} users`);
+    });
+  }
+
+  if (typespecSummary.length > 0) {
+    console.log("\nTop 5 typespec paths (pending correlation with releases):");
+    typespecSummary.slice(0, 5).forEach((t, i) => {
+      console.log(`  ${i + 1}. ${t.typespecPath}: ${t.callCount} calls, ${t.userCount} users`);
+    });
+  }
+
+  if (toolSummary.length > 0) {
+    console.log("\nTop 5 tools:");
+    toolSummary.slice(0, 5).forEach((t, i) => {
+      console.log(`  ${i + 1}. ${t.name}: ${t.calls} calls, ${t.successRate}% success`);
+    });
   }
 }
 

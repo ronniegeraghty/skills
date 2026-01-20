@@ -1,5 +1,10 @@
 /**
  * Shared utilities for the Azure SDK MCP Adoption skill
+ * 
+ * Provides common functionality for:
+ * - Output directory management (timestamped run folders)
+ * - File I/O operations (JSON read/write)
+ * - Cross-run file discovery (finding data from previous runs)
  */
 
 import { mkdirSync, existsSync, writeFileSync, readFileSync, readdirSync, statSync } from "fs";
@@ -8,12 +13,20 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Cache the current run's output directory for consistent access
+// -----------------------------------------------------------------------------
+// Module State
+// -----------------------------------------------------------------------------
+
+/** Cached output directory path for the current run */
 let cachedOutputDir = null;
 
+// -----------------------------------------------------------------------------
+// Directory Management
+// -----------------------------------------------------------------------------
+
 /**
- * Get the base output directory
- * @returns {string}
+ * Get the base output directory path
+ * @returns {string} Absolute path to the output folder
  */
 export function getBaseOutputDir() {
   return join(__dirname, "..", "output");
@@ -21,7 +34,8 @@ export function getBaseOutputDir() {
 
 /**
  * Generate a timestamp string for folder naming
- * @returns {string} - Format: YYYY-MM-DDTHH-MM-SS
+ * Format: YYYY-MM-DDTHH-MM-SS (ISO 8601 with colons replaced by dashes)
+ * @returns {string}
  */
 export function generateTimestamp() {
   const now = new Date();
@@ -32,29 +46,28 @@ export function generateTimestamp() {
 
 /**
  * Get or create the current run's output directory
- * Uses environment variable to share timestamp across scripts in a pipeline
- * @returns {string}
+ * 
+ * Uses the AZSDK_MCP_RUN_ID environment variable to share the run ID
+ * across scripts in a pipeline. If not set, generates a new timestamp.
+ * 
+ * @returns {string} Absolute path to the run's output folder
  */
 export function getOutputDir() {
-  // Return cached value if already computed in this process
   if (cachedOutputDir) {
     return cachedOutputDir;
   }
 
   const baseDir = getBaseOutputDir();
   
-  // Check if we have a run ID from environment (set by the first script in a pipeline)
+  // Use existing run ID or generate new one
   let runId = process.env.AZSDK_MCP_RUN_ID;
-  
   if (!runId) {
-    // Generate new run ID
     runId = generateTimestamp();
     process.env.AZSDK_MCP_RUN_ID = runId;
   }
   
   const outputDir = join(baseDir, runId);
   
-  // Ensure directory exists
   if (!existsSync(outputDir)) {
     mkdirSync(outputDir, { recursive: true });
   }
@@ -64,33 +77,17 @@ export function getOutputDir() {
 }
 
 /**
- * Get the latest output directory (most recent run)
- * @returns {string|null}
- */
-export function getLatestOutputDir() {
-  const baseDir = getBaseOutputDir();
-  
-  if (!existsSync(baseDir)) {
-    return null;
-  }
-  
-  const entries = readdirSync(baseDir)
-    .map(name => ({
-      name,
-      path: join(baseDir, name),
-      stat: statSync(join(baseDir, name))
-    }))
-    .filter(e => e.stat.isDirectory())
-    .sort((a, b) => b.stat.mtime.getTime() - a.stat.mtime.getTime());
-  
-  return entries.length > 0 ? entries[0].path : null;
-}
-
-/**
- * Find the best output directory for reading pipeline data.
- * Searches recent run directories for required files.
- * @param {string[]} requiredFiles - Array of filenames that must exist
- * @returns {{ dir: string, found: string[] } | null}
+ * Find output directories containing specific files
+ * 
+ * Searches recent run directories for required files. Handles cases where
+ * files may be split across multiple runs (e.g., telemetry from one run,
+ * releases from another).
+ * 
+ * @param {string[]} requiredFiles - Array of filenames to search for
+ * @returns {Object|null} Object containing found file paths, or null if not found
+ * @returns {string} [return.dir] - Directory containing all files (if all in one dir)
+ * @returns {Object.<string, string>} [return.files] - Map of filename to full path
+ * @returns {string[]} return.found - List of found filenames
  */
 export function findOutputDirWithFiles(requiredFiles) {
   const baseDir = getBaseOutputDir();
@@ -99,7 +96,7 @@ export function findOutputDirWithFiles(requiredFiles) {
     return null;
   }
   
-  // Get all run directories sorted by most recent
+  // Get all run directories sorted by timestamp (newest first)
   const runDirs = readdirSync(baseDir)
     .map(name => ({
       name,
@@ -107,9 +104,9 @@ export function findOutputDirWithFiles(requiredFiles) {
       stat: statSync(join(baseDir, name))
     }))
     .filter(e => e.stat.isDirectory() && /^\d{4}-\d{2}-\d{2}T/.test(e.name))
-    .sort((a, b) => b.name.localeCompare(a.name)); // Sort by name (timestamp) descending
+    .sort((a, b) => b.name.localeCompare(a.name));
   
-  // For each directory, check if all required files exist
+  // Try to find a single directory with all required files
   for (const runDir of runDirs) {
     const found = requiredFiles.filter(f => existsSync(join(runDir.path, f)));
     if (found.length === requiredFiles.length) {
@@ -117,8 +114,7 @@ export function findOutputDirWithFiles(requiredFiles) {
     }
   }
   
-  // If no single directory has all files, try to find files across recent runs
-  // This handles the case where telemetry.json and releases.json are in different dirs
+  // If no single directory has all files, search across multiple runs
   const fileLocations = {};
   for (const file of requiredFiles) {
     for (const runDir of runDirs) {
@@ -130,7 +126,6 @@ export function findOutputDirWithFiles(requiredFiles) {
     }
   }
   
-  // Check if we found all files
   const foundFiles = Object.keys(fileLocations);
   if (foundFiles.length === requiredFiles.length) {
     return { 
@@ -143,74 +138,20 @@ export function findOutputDirWithFiles(requiredFiles) {
   return null;
 }
 
+// -----------------------------------------------------------------------------
+// File I/O
+// -----------------------------------------------------------------------------
+
 /**
  * Write JSON data to the output directory
- * @param {string} filename 
- * @param {object} data 
- * @param {string} [outputDir] - Optional specific output directory
+ * @param {string} filename - Name of the file (e.g., "telemetry.json")
+ * @param {Object} data - Data to serialize
+ * @param {string} [outputDir] - Specific output directory (defaults to current run)
+ * @returns {string} Full path to the written file
  */
 export function writeOutput(filename, data, outputDir = null) {
   const dir = outputDir || getOutputDir();
   const path = join(dir, filename);
   writeFileSync(path, JSON.stringify(data, null, 2));
   return path;
-}
-
-/**
- * Load JSON from a file
- * @param {string} filepath 
- * @returns {object|null}
- */
-export function loadJson(filepath) {
-  if (!existsSync(filepath)) {
-    return null;
-  }
-  return JSON.parse(readFileSync(filepath, "utf-8"));
-}
-
-/**
- * Parse command line arguments
- * @param {string[]} argDefs - Array of argument names to look for
- * @returns {object}
- */
-export function parseArgs(argDefs) {
-  const args = process.argv.slice(2);
-  const result = {};
-  
-  for (const def of argDefs) {
-    result[def] = [];
-  }
-  
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i].replace(/^--/, "");
-    if (argDefs.includes(arg) && args[i + 1]) {
-      result[arg].push(args[++i]);
-    }
-  }
-  
-  return result;
-}
-
-/**
- * Format a date for display
- * @param {string|Date} date 
- * @returns {string}
- */
-export function formatDate(date) {
-  if (!date) return "N/A";
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
-
-/**
- * Format a number with commas
- * @param {number} num 
- * @returns {string}
- */
-export function formatNumber(num) {
-  return num.toLocaleString();
 }

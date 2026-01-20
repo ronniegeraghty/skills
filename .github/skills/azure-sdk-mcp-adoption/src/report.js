@@ -1,36 +1,51 @@
 /**
- * Generate a markdown report from correlation data
+ * Generate Markdown Report from Correlation Data
+ * 
+ * Creates a human-readable markdown report with embedded charts (via QuickChart)
+ * showing MCP adoption metrics for Azure SDK releases.
+ * 
+ * @module report
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 import QuickChart from "quickchart-js";
+import { CHART_CONFIG } from "./constants.js";
 import { getOutputDir, writeOutput, findOutputDirWithFiles } from "./utils.js";
 
-const CHART_WIDTH = 600;
-const CHART_HEIGHT = 400;
+// -----------------------------------------------------------------------------
+// Chart Generation
+// -----------------------------------------------------------------------------
 
 /**
- * Generate a chart URL
+ * Generate a QuickChart URL for embedding in markdown
+ * 
+ * @param {Object} config - Chart.js configuration object
+ * @returns {string} URL to the generated chart image
  */
 function getChartUrl(config) {
   const chart = new QuickChart();
   chart.setConfig(config);
-  chart.setWidth(CHART_WIDTH);
-  chart.setHeight(CHART_HEIGHT);
-  chart.setBackgroundColor("white");
+  chart.setWidth(CHART_CONFIG.width);
+  chart.setHeight(CHART_CONFIG.height);
+  chart.setBackgroundColor(CHART_CONFIG.backgroundColor);
   return chart.getUrl();
 }
 
 /**
- * Format a number with commas
+ * Format a number with locale-aware separators
+ * @param {number} n - Number to format
+ * @returns {string} Formatted number string
  */
 function formatNumber(n) {
   return n?.toLocaleString() || "0";
 }
 
 /**
- * Generate the adoption by language chart
+ * Generate bar chart showing MCP adoption by programming language
+ * 
+ * @param {Object[]} byLanguage - Language statistics array
+ * @returns {string} Markdown image syntax with chart URL
  */
 function generateLanguageChart(byLanguage) {
   const config = {
@@ -70,26 +85,42 @@ function generateLanguageChart(byLanguage) {
 }
 
 /**
- * Generate the adoption by version type chart
+ * Generate bar chart showing MCP adoption by version type (GA/Beta)
+ * 
+ * @param {Object[]} byVersionType - Version type statistics array
+ * @returns {string} Markdown image syntax with chart URL
  */
 function generateVersionTypeChart(byVersionType) {
   const config = {
     type: "bar",
     data: {
       labels: byVersionType.map(v => v.versionType),
-      datasets: [{
-        label: "Adoption Rate (%)",
-        data: byVersionType.map(v => v.adoptionRate),
-        backgroundColor: ["rgba(75, 192, 92, 0.8)", "rgba(255, 205, 86, 0.8)"]
-      }]
+      datasets: [
+        {
+          label: "With MCP Usage",
+          data: byVersionType.map(v => v.withMcp),
+          backgroundColor: "rgba(54, 162, 235, 0.9)"
+        },
+        {
+          label: "Total Releases",
+          data: byVersionType.map(v => v.total),
+          backgroundColor: "rgba(201, 203, 207, 0.9)"
+        }
+      ]
     },
     options: {
       plugins: {
-        title: { display: true, text: "MCP Adoption Rate by Release Type" },
-        legend: { display: false }
+        title: { display: true, text: "MCP Adoption by Release Type" },
+        datalabels: {
+          display: true,
+          anchor: "end",
+          align: "top",
+          color: "#333",
+          font: { weight: "bold" }
+        }
       },
       scales: {
-        y: { beginAtZero: true, max: 100 }
+        y: { beginAtZero: true }
       }
     }
   };
@@ -97,7 +128,10 @@ function generateVersionTypeChart(byVersionType) {
 }
 
 /**
- * Generate the adoption by plane chart
+ * Generate doughnut chart showing releases by plane (Management/Data)
+ * 
+ * @param {Object[]} byPlane - Plane statistics array
+ * @returns {string} Markdown image syntax with chart URL
  */
 function generatePlaneChart(byPlane) {
   const config = {
@@ -118,8 +152,15 @@ function generatePlaneChart(byPlane) {
   return `![Releases by Plane](${getChartUrl(config)})`;
 }
 
+// -----------------------------------------------------------------------------
+// Report Generation
+// -----------------------------------------------------------------------------
+
 /**
- * Generate the main report
+ * Generate the complete markdown report
+ * 
+ * @param {Object} data - Correlation data including metadata, summary, and releases
+ * @returns {string} Complete markdown report
  */
 function generateReport(data) {
   const { metadata, summary, byLanguage, byVersionType, byPlane, releases, toolSummary, clientSummary } = data;
@@ -274,38 +315,53 @@ The following **${withMcp.length}** packages released in ${metadata.releaseMonth
   return md;
 }
 
+// -----------------------------------------------------------------------------
+// Data Loading
+// -----------------------------------------------------------------------------
+
 /**
- * Main function
+ * Load correlation data from current or previous run
+ * 
+ * @param {string} outputDir - Current run's output directory
+ * @returns {Object} Correlation data
+ * @throws {Error} If correlation.json not found
+ */
+function loadCorrelationData(outputDir) {
+  const correlationPath = join(outputDir, "correlation.json");
+
+  if (existsSync(correlationPath)) {
+    return JSON.parse(readFileSync(correlationPath, "utf-8"));
+  }
+  
+  const found = findOutputDirWithFiles(["correlation.json"]);
+  if (found?.files) {
+    return JSON.parse(readFileSync(found.files["correlation.json"], "utf-8"));
+  }
+  if (found?.dir) {
+    return JSON.parse(readFileSync(join(found.dir, "correlation.json"), "utf-8"));
+  }
+  
+  throw new Error("correlation.json not found. Run correlate step first.");
+}
+
+// -----------------------------------------------------------------------------
+// Main Entry Point
+// -----------------------------------------------------------------------------
+
+/**
+ * Main function - generates markdown report from correlation data
  */
 async function main() {
   const outputDir = getOutputDir();
   console.log(`Output directory: ${outputDir}`);
   console.log("Loading correlation data...");
 
-  // Load correlation data
-  let correlationData = null;
-  const correlationPath = join(outputDir, "correlation.json");
-
-  if (existsSync(correlationPath)) {
-    correlationData = JSON.parse(readFileSync(correlationPath, "utf-8"));
-  } else {
-    const found = findOutputDirWithFiles(["correlation.json"]);
-    if (found?.files) {
-      correlationData = JSON.parse(readFileSync(found.files["correlation.json"], "utf-8"));
-    } else if (found?.dir) {
-      correlationData = JSON.parse(readFileSync(join(found.dir, "correlation.json"), "utf-8"));
-    }
-  }
-
-  if (!correlationData) {
-    console.error("correlation.json not found. Run correlate step first.");
-    process.exit(1);
-  }
+  const correlationData = loadCorrelationData(outputDir);
 
   console.log("Generating markdown report...");
   const report = generateReport(correlationData);
 
-  // Write report as plain text (not JSON)
+  // Write report
   const reportPath = join(outputDir, "report.md");
   writeFileSync(reportPath, report);
   console.log(`Report written to ${reportPath}`);

@@ -2,11 +2,16 @@
 /**
  * Azure SDK MCP Adoption Report Generator
  * 
- * Orchestrates the pipeline:
- * 1. fetch-telemetry - Get MCP tool usage from Kusto (3 months back)
- * 2. fetch-releases - Get releases from GitHub (target month)
- * 3. correlate - Match releases with MCP usage
- * 4. report - Generate markdown report
+ * Pipeline orchestrator that runs all steps in sequence:
+ * 1. fetch-telemetry - Query Kusto for MCP tool usage data
+ * 2. fetch-releases  - Fetch monthly release data from GitHub
+ * 3. correlate       - Match releases with MCP usage
+ * 4. report          - Generate markdown report with charts
+ * 
+ * Each step produces JSON output that the next step consumes.
+ * All outputs go to a timestamped directory (e.g., output/2026-01-20T10-30-00/).
+ * 
+ * @module run
  */
 
 import { spawn } from "child_process";
@@ -16,6 +21,13 @@ import { getOutputDir, generateTimestamp } from "./utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// -----------------------------------------------------------------------------
+// Pipeline Configuration
+// -----------------------------------------------------------------------------
+
+/**
+ * Pipeline steps in execution order
+ */
 const STEPS = [
   { name: "fetch-telemetry", script: "fetch-telemetry.js", desc: "Fetching MCP telemetry from Kusto" },
   { name: "fetch-releases", script: "fetch-releases.js", desc: "Fetching releases from GitHub" },
@@ -23,8 +35,17 @@ const STEPS = [
   { name: "report", script: "report.js", desc: "Generating markdown report" }
 ];
 
+// -----------------------------------------------------------------------------
+// Step Execution
+// -----------------------------------------------------------------------------
+
 /**
- * Run a single step
+ * Run a single pipeline step
+ * 
+ * @param {Object} step - Step configuration with name, script, and desc
+ * @param {string[]} args - Command line arguments to pass to the script
+ * @returns {Promise<void>} Resolves when step completes successfully
+ * @throws {Error} If step exits with non-zero code
  */
 function runStep(step, args = []) {
   return new Promise((resolve, reject) => {
@@ -52,8 +73,19 @@ function runStep(step, args = []) {
   });
 }
 
+// -----------------------------------------------------------------------------
+// Argument Parsing
+// -----------------------------------------------------------------------------
+
 /**
  * Parse command line arguments
+ * 
+ * Supported arguments:
+ *   --step <name>     Run specific step(s) only (can be repeated)
+ *   --help, -h        Show help message
+ *   All other args    Passed through to individual scripts
+ * 
+ * @returns {{ steps: string[], passthrough: string[] }}
  */
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -79,8 +111,12 @@ function parseArgs() {
   return { steps, passthrough };
 }
 
+// -----------------------------------------------------------------------------
+// Help Output
+// -----------------------------------------------------------------------------
+
 /**
- * Print help
+ * Print help message to console
  */
 function printHelp() {
   console.log(`
@@ -107,16 +143,19 @@ Examples:
 `);
 }
 
+// -----------------------------------------------------------------------------
+// Main Entry Point
+// -----------------------------------------------------------------------------
+
 /**
- * Main
+ * Main function - orchestrates the pipeline
  */
 async function main() {
   const { steps: requestedSteps, passthrough } = parseArgs();
   
-  // Set shared run ID
-  if (!process.env.AZSDK_MCP_RUN_ID) {
-    process.env.AZSDK_MCP_RUN_ID = generateTimestamp();
-  }
+  // Always generate a new run ID for each pipeline run
+  // This ensures outputs always go to a fresh directory with the current timestamp
+  process.env.AZSDK_MCP_RUN_ID = generateTimestamp();
   
   const outputDir = getOutputDir();
   
