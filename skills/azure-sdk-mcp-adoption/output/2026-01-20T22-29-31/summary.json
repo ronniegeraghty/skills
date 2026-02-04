@@ -1,0 +1,69 @@
+{
+  "totalReleases": 92,
+  "releasesWithMcp": 16,
+  "adoptionRate": 17.39,
+  "matchBreakdown": {
+    "directPackageMatches": 11,
+    "typespecPathMatches": 5
+  },
+  "byLanguage": [
+    {
+      "language": "dotnet",
+      "total": 25,
+      "withMcp": 4,
+      "adoptionRate": 16
+    },
+    {
+      "language": "python",
+      "total": 22,
+      "withMcp": 5,
+      "adoptionRate": 22.73
+    },
+    {
+      "language": "go",
+      "total": 22,
+      "withMcp": 3,
+      "adoptionRate": 13.64
+    },
+    {
+      "language": "js",
+      "total": 16,
+      "withMcp": 3,
+      "adoptionRate": 18.75
+    },
+    {
+      "language": "cpp",
+      "total": 7,
+      "withMcp": 1,
+      "adoptionRate": 14.29
+    }
+  ],
+  "byVersionType": [
+    {
+      "versionType": "GA",
+      "total": 60,
+      "withMcp": 6,
+      "adoptionRate": 10
+    },
+    {
+      "versionType": "Beta",
+      "total": 32,
+      "withMcp": 10,
+      "adoptionRate": 31.25
+    }
+  ],
+  "byPlane": [
+    {
+      "plane": "Data",
+      "total": 51,
+      "withMcp": 5,
+      "adoptionRate": 9.8
+    },
+    {
+      "plane": "Management",
+      "total": 41,
+      "withMcp": 11,
+      "adoptionRate": 26.83
+    }
+  ]
+}

@@ -1,0 +1,1864 @@
+{
+  "metadata": {
+    "startDate": "2025-10-15",
+    "endDate": "2026-01-16",
+    "generatedAt": "2026-01-20T22:29:35.914Z",
+    "cluster": "https://ddazureclients.kusto.windows.net",
+    "database": "AzSdkToolsMcp",
+    "totalRawCalls": 3292,
+    "callsWithPackage": 387,
+    "callsWithTypespecOnly": 328,
+    "uniqueTypespecPaths": 23
+  },
+  "packageSummary": [
+    {
+      "packageName": "Azure.ResourceManager.ResourceConnector",
+      "language": "DotNet",
+      "callCount": 51,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_run_tests",
+        "azsdk_package_run_check",
+        "azsdk_release_sdk",
+        "azsdk_package_update_metadata"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 51
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-healthdataaiservices",
+      "language": "JavaScript",
+      "callCount": 37,
+      "userCount": 4,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_update_version",
+        "azsdk_package_build_code",
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 37
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/resourcemanager/healthdataaiservices/armhealthdataaiservices",
+      "language": "Go",
+      "callCount": 25,
+      "userCount": 5,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_update_version",
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 25
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.ResourceManager.Advisor",
+      "language": "DotNet",
+      "callCount": 18,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_run_tests",
+        "azsdk_package_run_check",
+        "azsdk_package_update_metadata"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 18
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-computefleet",
+      "language": "JavaScript",
+      "callCount": 17,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_update_version",
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 17
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-netapp",
+      "language": "JavaScript",
+      "callCount": 17,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness",
+        "azsdk_package_update_version",
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 17
+        }
+      ]
+    },
+    {
+      "packageName": "azure-analytics-purview-datamap",
+      "language": "Java",
+      "callCount": 16,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check",
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 16
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-storage",
+      "language": "JavaScript",
+      "callCount": 15,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_update_version"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 15
+        }
+      ]
+    },
+    {
+      "packageName": "azure-mgmt-healthdataaiservices",
+      "language": "Python",
+      "callCount": 14,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_run_check",
+        "azsdk_package_update_metadata",
+        "azsdk_package_update_version",
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 14
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-iotoperations",
+      "language": "JavaScript",
+      "callCount": 11,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_update_version"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 11
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.ResourceManager.HealthDataAIServices",
+      "language": "DotNet",
+      "callCount": 10,
+      "userCount": 3,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_run_check",
+        "azsdk_package_update_metadata"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 10
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-healthdataaiservices",
+      "language": "Java",
+      "callCount": 9,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 9
+        }
+      ]
+    },
+    {
+      "packageName": "azure-mgmt-avs",
+      "language": "Python",
+      "callCount": 8,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness",
+        "azsdk_release_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 8
+        }
+      ]
+    },
+    {
+      "packageName": "azure-health-deidentification",
+      "language": "Java",
+      "callCount": 7,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 7
+        }
+      ]
+    },
+    {
+      "packageName": "@azure-rest/health-deidentification",
+      "language": "JavaScript",
+      "callCount": 6,
+      "userCount": 3,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 6
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/eventgrid",
+      "language": "JavaScript",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 5
+        }
+      ]
+    },
+    {
+      "packageName": "azure-ai-contentunderstanding",
+      "language": "Python",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 5
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-avs",
+      "language": "JavaScript",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_release_sdk",
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 5
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.ResourceManager.AgriculturePlatform",
+      "language": "DotNet",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_update_metadata",
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 5
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.ResourceManager.NetApp",
+      "language": "Unknown",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness",
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 5
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/resourcemanager/resourceconnector/armresourceconnector",
+      "language": "Go",
+      "callCount": 4,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_release_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "packageName": "azure-mgmt-netapp",
+      "language": "Python",
+      "callCount": 4,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness",
+        "azsdk_release_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-databoxedge",
+      "language": "Java",
+      "callCount": 4,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_package_update_changelog_content"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-avs",
+      "language": "Java",
+      "callCount": 4,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_package_build_code",
+        "azsdk_release_sdk",
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-contoso",
+      "language": "JavaScript",
+      "callCount": 4,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_update_version"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "packageName": "@azure-rest/purview-datamap",
+      "language": "JavaScript",
+      "callCount": 4,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 4
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-resourceconnector",
+      "language": "Java",
+      "callCount": 3,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_release_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "packageName": "azure-mgmt-resourceconnector",
+      "language": "Python",
+      "callCount": 3,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_release_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-dell-storage",
+      "language": "JavaScript",
+      "callCount": 3,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness",
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.ResourceManager.ApiCenter",
+      "language": "DotNet",
+      "callCount": 3,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_metadata",
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-compute",
+      "language": "JavaScript",
+      "callCount": 3,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-contoso",
+      "language": "Java",
+      "callCount": 3,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_version",
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/resourcemanager/avs/armavs",
+      "language": "Go",
+      "callCount": 3,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_release_sdk",
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 3
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/resourcemanager/agricultureplatform/armagricultureplatform",
+      "language": "Go",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_version",
+        "azsdk_package_update_changelog_content"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-servicefabricmanagedclusters",
+      "language": "Java",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content",
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-servicefabricmanagedclusters",
+      "language": "JavaScript",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_version"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-sql",
+      "language": "JavaScript",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_version",
+        "azsdk_package_update_changelog_content"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/resourcemanager/compute/armcompute",
+      "language": "Go",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_version",
+        "azsdk_package_update_changelog_content"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "azure-purview-datamap",
+      "language": "Python",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "azure-ai",
+      "language": "Python",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "\"azure-template\"",
+      "language": "\"Python\"",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "azure-mgmt-computefleet",
+      "language": "Python",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.Communication.Chat",
+      "language": "DotNet",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "azure-sdk-for-go",
+      "language": "Go",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.ResourceManager.Avs",
+      "language": "Unknown",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_release_sdk",
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.AI.Projects",
+      "language": "DotNet",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_metadata"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.Analytics.Experimentation",
+      "language": "DotNet",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.Communication.Messages",
+      "language": "DotNet",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-mgmt-dellstorage",
+      "language": "Python",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-dell-storage",
+      "language": "Java",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-dellstorage",
+      "language": "Java",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.ResourceManager.Dell.Storage",
+      "language": "DotNet",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "sdk-resourcemanager/dell/armdellstorage",
+      "language": "Go",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/resourcemanager/dell/armdellstorage",
+      "language": "Go",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-ai-documentintelligence",
+      "language": "Java",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-dnsresolver",
+      "language": "Java",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/ai-agents",
+      "language": "JavaScript",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-chaos",
+      "language": "Java",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-sdk-for-net",
+      "language": "Unknown",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "SDK/Test/azure-sdk-for-go/sdk/resourcemanager/connectedcache/armconnectedcache",
+      "language": "Go",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.AI.Language.Conversations",
+      "language": "DotNet",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/healthdataaiservices/azhealthdeidentification",
+      "language": "Go",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-resourcemanager-hybridconnectivity",
+      "language": "Java",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-ai-projects",
+      "language": "Java",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_metadata"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "v7",
+      "language": "Go",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-sdk-for-python",
+      "language": "Python",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-template",
+      "language": "Python",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-confluent",
+      "language": "JavaScript",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_update_changelog_content"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/identity",
+      "language": "JavaScript",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "@azure-rest/ai-anomaly-detector",
+      "language": "JavaScript",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_run_check"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "sdk/resourcemanager/computefleet/armcomputefleet",
+      "language": "Go",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "Azure.Health.Deidentification",
+      "language": "DotNet",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "armcomputefleet",
+      "language": "Go",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-storage-blob",
+      "language": "Python",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-resourceconnector",
+      "language": "JavaScript",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_release_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "@azure/arm-azurestackhci",
+      "language": "JavaScript",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_package_build_code"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    },
+    {
+      "packageName": "azure-mgmt-storage",
+      "language": "Python",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_check_package_release_readiness"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 1
+        }
+      ]
+    }
+  ],
+  "typespecSummary": [
+    {
+      "typespecPath": "specification/contosowidgetmanager/Contoso.Management",
+      "normalizedPath": "specification/contosowidgetmanager/contoso.management",
+      "callCount": 89,
+      "userCount": 17,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 83
+        },
+        {
+          "name": "Visual Studio Code - Insiders",
+          "calls": 6
+        }
+      ],
+      "languages": [
+        "Unknown",
+        "Java",
+        "Go",
+        "JavaScript",
+        "Python",
+        "DotNet"
+      ]
+    },
+    {
+      "typespecPath": "specification/netapp/resource-manager/Microsoft.NetApp/NetApp",
+      "normalizedPath": "specification/netapp/resource-manager/microsoft.netapp/netapp",
+      "callCount": 63,
+      "userCount": 8,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 32
+        },
+        {
+          "name": "github-copilot-developer",
+          "calls": 31
+        }
+      ],
+      "languages": [
+        "Unknown",
+        "JavaScript",
+        "Go",
+        "Java",
+        "Python",
+        "DotNet"
+      ]
+    },
+    {
+      "typespecPath": "specification/vmware/resource-manager/Microsoft.AVS/AVS",
+      "normalizedPath": "specification/vmware/resource-manager/microsoft.avs/avs",
+      "callCount": 18,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 18
+        }
+      ],
+      "languages": [
+        "DotNet",
+        "JavaScript",
+        "Python",
+        "Go",
+        "Java",
+        "Unknown"
+      ]
+    },
+    {
+      "typespecPath": "specification/resourceconnector/resource-manager/Microsoft.ResourceConnector/ResourceConnector",
+      "normalizedPath": "specification/resourceconnector/resource-manager/microsoft.resourceconnector/resourceconnector",
+      "callCount": 16,
+      "userCount": 3,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 11
+        },
+        {
+          "name": "Visual Studio Code",
+          "calls": 5
+        }
+      ],
+      "languages": [
+        "Java",
+        "Go",
+        "JavaScript",
+        "DotNet",
+        "Python",
+        "Unknown"
+      ]
+    },
+    {
+      "typespecPath": "specification/paloaltonetworks/PaloAltoNetworks.Management",
+      "normalizedPath": "specification/paloaltonetworks/paloaltonetworks.management",
+      "callCount": 16,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 10
+        },
+        {
+          "name": "github-copilot-developer",
+          "calls": 6
+        }
+      ],
+      "languages": []
+    },
+    {
+      "typespecPath": "specification/computelimit/resource-manager/Microsoft.ComputeLimit/ComputeLimit",
+      "normalizedPath": "specification/computelimit/resource-manager/microsoft.computelimit/computelimit",
+      "callCount": 15,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 15
+        }
+      ],
+      "languages": [
+        "Unknown"
+      ]
+    },
+    {
+      "typespecPath": "specification/cdn/resource-manager/Microsoft.Cdn/EdgeActions",
+      "normalizedPath": "specification/cdn/resource-manager/microsoft.cdn/edgeactions",
+      "callCount": 15,
+      "userCount": 3,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 15
+        }
+      ],
+      "languages": [
+        "JavaScript",
+        "DotNet",
+        "Python",
+        "Go",
+        "Java"
+      ]
+    },
+    {
+      "typespecPath": "specification/healthdataaiservices/HealthDataAIServices.Management",
+      "normalizedPath": "specification/healthdataaiservices/healthdataaiservices.management",
+      "callCount": 11,
+      "userCount": 3,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 11
+        }
+      ],
+      "languages": [
+        "Unknown"
+      ]
+    },
+    {
+      "typespecPath": "specification/compute/Gallery.Management",
+      "normalizedPath": "specification/compute/gallery.management",
+      "callCount": 10,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 10
+        }
+      ],
+      "languages": [
+        "JavaScript",
+        "Java",
+        "DotNet",
+        "Go",
+        "Python"
+      ]
+    },
+    {
+      "typespecPath": "specification/dell/Dell.Storage.Management",
+      "normalizedPath": "specification/dell/dell.storage.management",
+      "callCount": 9,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 9
+        }
+      ],
+      "languages": [
+        "JavaScript",
+        "Unknown",
+        "DotNet"
+      ]
+    },
+    {
+      "typespecPath": "specification/containerservice/Fleet.Management",
+      "normalizedPath": "specification/containerservice/fleet.management",
+      "callCount": 9,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 9
+        }
+      ],
+      "languages": [
+        "Python",
+        "Unknown"
+      ]
+    },
+    {
+      "typespecPath": "specification/elasticsan/resource-manager/Microsoft.ElasticSan/ElasticSan",
+      "normalizedPath": "specification/elasticsan/resource-manager/microsoft.elasticsan/elasticsan",
+      "callCount": 7,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 7
+        }
+      ],
+      "languages": []
+    },
+    {
+      "typespecPath": "specification/healthbot/HealthBot.Management",
+      "normalizedPath": "specification/healthbot/healthbot.management",
+      "callCount": 6,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 6
+        }
+      ],
+      "languages": [
+        "Python",
+        "Go",
+        "DotNet",
+        "Java",
+        "JavaScript"
+      ]
+    },
+    {
+      "typespecPath": "specification/servicefabricmanagedclusters/resource-manager/Microsoft.ServiceFabric/ServiceFabricManagedClusters",
+      "normalizedPath": "specification/servicefabricmanagedclusters/resource-manager/microsoft.servicefabric/servicefabricmanagedclusters",
+      "callCount": 6,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 6
+        }
+      ],
+      "languages": [
+        "Unknown",
+        "Java"
+      ]
+    },
+    {
+      "typespecPath": "specification/deviceregistry/DeviceRegistry.Management",
+      "normalizedPath": "specification/deviceregistry/deviceregistry.management",
+      "callCount": 6,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 6
+        }
+      ],
+      "languages": []
+    },
+    {
+      "typespecPath": "specification/edgemarketplace/Microsoft.EdgeMarketPlace.Management",
+      "normalizedPath": "specification/edgemarketplace/microsoft.edgemarketplace.management",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 5
+        }
+      ],
+      "languages": [
+        "DotNet",
+        "Java",
+        "Python",
+        "JavaScript",
+        "Go"
+      ]
+    },
+    {
+      "typespecPath": "specification/managednetworkfabric/ManagedNetworkFabric.ResourceManager.Management",
+      "normalizedPath": "specification/managednetworkfabric/managednetworkfabric.resourcemanager.management",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 5
+        }
+      ],
+      "languages": [
+        "Unknown"
+      ]
+    },
+    {
+      "typespecPath": "specification/connectedcache/ConnectedCache.Management",
+      "normalizedPath": "specification/connectedcache/connectedcache.management",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 5
+        }
+      ],
+      "languages": [
+        "JavaScript",
+        "DotNet",
+        "Java",
+        "Go",
+        "Python"
+      ]
+    },
+    {
+      "typespecPath": "specification/azurestackhci/resource-manager/Microsoft.AzureStackHCI/StackHCI",
+      "normalizedPath": "specification/azurestackhci/resource-manager/microsoft.azurestackhci/stackhci",
+      "callCount": 5,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 5
+        }
+      ],
+      "languages": [
+        "Python",
+        "Go",
+        "JavaScript",
+        "DotNet",
+        "Java"
+      ]
+    },
+    {
+      "typespecPath": "specification/dnsresolver/resource-manager/Microsoft.Network/DnsResolver",
+      "normalizedPath": "specification/dnsresolver/resource-manager/microsoft.network/dnsresolver",
+      "callCount": 4,
+      "userCount": 4,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 4
+        }
+      ],
+      "languages": []
+    },
+    {
+      "typespecPath": "specification/healthdataaiservices/HealthDataAIServices.DeidServices",
+      "normalizedPath": "specification/healthdataaiservices/healthdataaiservices.deidservices",
+      "callCount": 2,
+      "userCount": 2,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "Visual Studio Code",
+          "calls": 2
+        }
+      ],
+      "languages": [
+        "JavaScript"
+      ]
+    },
+    {
+      "typespecPath": "specification/impact/Impact.Management",
+      "normalizedPath": "specification/impact/impact.management",
+      "callCount": 2,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 2
+        }
+      ],
+      "languages": []
+    },
+    {
+      "typespecPath": "specification/mysql/resource-manager/Microsoft.DBforMySQL/FlexibleServers",
+      "normalizedPath": "specification/mysql/resource-manager/microsoft.dbformysql/flexibleservers",
+      "callCount": 1,
+      "userCount": 1,
+      "toolsUsed": [
+        "azsdk_run_generate_sdk"
+      ],
+      "clientsUsed": [
+        {
+          "name": "github-copilot-developer",
+          "calls": 1
+        }
+      ],
+      "languages": [
+        "Unknown"
+      ]
+    }
+  ],
+  "toolSummary": [
+    {
+      "name": "azsdk_package_run_check",
+      "calls": 108,
+      "successRate": 36,
+      "userCount": 23,
+      "packageCount": 20
+    },
+    {
+      "name": "azsdk_package_build_code",
+      "calls": 92,
+      "successRate": 60,
+      "userCount": 23,
+      "packageCount": 33
+    },
+    {
+      "name": "azsdk_package_update_changelog_content",
+      "calls": 67,
+      "successRate": 34,
+      "userCount": 11,
+      "packageCount": 17
+    },
+    {
+      "name": "azsdk_check_package_release_readiness",
+      "calls": 36,
+      "successRate": 64,
+      "userCount": 7,
+      "packageCount": 23
+    },
+    {
+      "name": "azsdk_package_update_version",
+      "calls": 34,
+      "successRate": 65,
+      "userCount": 8,
+      "packageCount": 13
+    },
+    {
+      "name": "azsdk_release_sdk",
+      "calls": 26,
+      "successRate": 88,
+      "userCount": 3,
+      "packageCount": 11
+    },
+    {
+      "name": "azsdk_package_run_tests",
+      "calls": 13,
+      "successRate": 62,
+      "userCount": 2,
+      "packageCount": 2
+    },
+    {
+      "name": "azsdk_package_update_metadata",
+      "calls": 11,
+      "successRate": 73,
+      "userCount": 6,
+      "packageCount": 8
+    }
+  ],
+  "clientSummary": [
+    {
+      "name": "github-copilot-developer",
+      "version": "1.0.0",
+      "calls": 1263,
+      "userCount": 69
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.106.3",
+      "calls": 614,
+      "userCount": 35
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.105.1",
+      "calls": 422,
+      "userCount": 26
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.107.1",
+      "calls": 238,
+      "userCount": 18
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.106.0",
+      "calls": 187,
+      "userCount": 16
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.107.0",
+      "calls": 182,
+      "userCount": 11
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.108.0",
+      "calls": 89,
+      "userCount": 11
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.105.0",
+      "calls": 72,
+      "userCount": 4
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.106.1",
+      "calls": 51,
+      "userCount": 7
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.104.1",
+      "calls": 51,
+      "userCount": 2
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.106.2",
+      "calls": 37,
+      "userCount": 8
+    },
+    {
+      "name": "Visual Studio Code - Insiders",
+      "version": "1.106.0-insider",
+      "calls": 32,
+      "userCount": 5
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.108.1",
+      "calls": 23,
+      "userCount": 2
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.104.0",
+      "calls": 18,
+      "userCount": 1
+    },
+    {
+      "name": "Visual Studio Code",
+      "version": "1.103.2",
+      "calls": 4,
+      "userCount": 1
+    },
+    {
+      "name": "JetBrains-IU/copilot-intellij",
+      "version": "253.28294.334/1.5.61-243",
+      "calls": 3,
+      "userCount": 1
+    },
+    {
+      "name": "Visual Studio Code - Insiders",
+      "version": "1.108.0-insider",
+      "calls": 3,
+      "userCount": 2
+    },
+    {
+      "name": "Visual Studio Code - Insiders",
+      "version": "1.107.0-insider",
+      "calls": 2,
+      "userCount": 1
+    },
+    {
+      "name": "inspector-client",
+      "version": "0.17.2",
+      "calls": 1,
+      "userCount": 1
+    }
+  ]
+}
