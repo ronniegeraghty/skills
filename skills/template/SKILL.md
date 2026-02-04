@@ -1,5 +1,5 @@
 ---
-name: template-skill
+name: template
 description: Template for creating new skills. Copy this folder and customize for your use case.
 ---
 

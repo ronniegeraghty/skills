@@ -1,0 +1,23 @@
+{
+  "name": "rgeraghty-skills",
+  "owner": {
+    "name": "Ryan Geraghty",
+    "email": "rgeraghty@github.com"
+  },
+  "metadata": {
+    "description": "Skills for AI workflows, Azure SDK analysis, and Copilot PR analysis",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "analysis-skills",
+      "description": "Collection of analysis skills for Azure SDK MCP adoption reporting and Copilot PR session analysis",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/azure-sdk-mcp-adoption",
+        "./skills/copilot-pr-analysis"
+      ]
+    }
+  ]
+}

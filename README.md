@@ -1,47 +1,81 @@
-# AI Skills
+# Skills
 
-A collection of [GitHub Copilot Agent Skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) for various AI workflows.
+A collection of [Agent Skills](https://agentskills.io/) for AI coding agents.
 
-Agent Skills are folders of instructions, scripts, and resources that Copilot can load when relevant to improve its performance in specialized tasks.
+Skills are folders of instructions, scripts, and resources that AI agents can load to improve performance on specialized tasks.
+
+> **Note:** For the Agent Skills specification, see [agentskills.io/specification](https://agentskills.io/specification).
 
 ## Structure
 
 ```
-ai-skills/
-└── .github/
-    └── skills/
-        └── <skill-name>/
-            ├── SKILL.md      # Required: skill instructions with YAML frontmatter
-            └── ...           # Optional: scripts, examples, resources
+skills/
+├── .claude-plugin/
+│   └── marketplace.json    # Plugin marketplace configuration
+├── skills/
+│   ├── azure-sdk-mcp-adoption/
+│   │   └── SKILL.md
+│   ├── copilot-pr-analysis/
+│   │   └── SKILL.md
+│   └── template/
+│       └── SKILL.md
+└── README.md
 ```
+
+## Available Skills
+
+| Skill | Description |
+|-------|-------------|
+| [azure-sdk-mcp-adoption](skills/azure-sdk-mcp-adoption) | Generate adoption reports correlating Azure SDK MCP tool usage with monthly releases |
+| [copilot-pr-analysis](skills/copilot-pr-analysis) | Analyze Copilot coding agent PR sessions to understand resource and tool usage patterns |
+
+## Installation
+
+### Claude Code
+
+```bash
+/plugin marketplace add rgeraghty/skills
+/plugin install analysis-skills@rgeraghty-skills
+```
+
+### GitHub Copilot
+
+Clone this repo and add the skills directory to your Copilot configuration, or copy individual skills to:
+- **Project skills**: `.github/skills/` in your repository
+- **Personal skills**: `~/.copilot/skills/`
 
 ## Creating a New Skill
 
-1. Create a subdirectory under `.github/skills/` with your skill name (lowercase, hyphens for spaces)
-2. Add a `SKILL.md` file with YAML frontmatter and instructions
-3. Optionally add scripts, examples, or other resources
+1. Copy the `skills/_template/` directory and rename it
+2. Update the `SKILL.md` frontmatter with your skill's `name` and `description`
+3. Add your instructions in the Markdown body
+4. Optionally add `scripts/`, `references/`, or `assets/` directories
 
 ### SKILL.md Format
 
 ```markdown
 ---
 name: your-skill-name
-description: Description of what the skill does and when Copilot should use it.
+description: A clear description of what this skill does and when to use it.
 ---
 
-Your detailed instructions for Copilot to follow...
+# Your Skill Name
+
+Instructions for the agent to follow...
 ```
 
-## Usage
+### Frontmatter Fields
 
-- **Project skills**: Store in `.github/skills/` for repository-specific skills
-- **Personal skills**: Store in `~/.copilot/skills/` for skills shared across projects
-
-Copilot automatically loads relevant skills based on your prompt and the skill's description.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Lowercase alphanumeric with hyphens, max 64 chars, must match directory name |
+| `description` | Yes | What the skill does and when to use it, max 1024 chars |
+| `license` | No | License name or reference to LICENSE file |
+| `compatibility` | No | Environment requirements (products, packages, network access) |
+| `metadata` | No | Additional key-value metadata |
 
 ## Resources
 
-- [Official Documentation](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
-- [Agent Skills Standard](https://github.com/agentskills/agentskills)
-- [Anthropic Skills Examples](https://github.com/anthropics/skills)
-- [Awesome Copilot Collection](https://github.com/github/awesome-copilot)
+- [Agent Skills Specification](https://agentskills.io/specification)
+- [Anthropic Skills Repository](https://github.com/anthropics/skills)
+- [Microsoft Agent Skills](https://github.com/microsoft/agent-skills)
