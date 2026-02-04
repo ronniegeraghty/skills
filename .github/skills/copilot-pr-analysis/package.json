@@ -1,0 +1,28 @@
+{
+  "name": "@skills/copilot-pr-analysis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Copilot agent skill that analyzes PR sessions to correlate resource/tool usage with PR outcomes",
+  "type": "module",
+  "scripts": {
+    "run": "node src/run.js",
+    "fetch:prs": "node src/fetch-prs.js",
+    "fetch:sessions": "node src/fetch-sessions.js",
+    "analyze": "node src/analyze.js",
+    "report": "node src/report.js",
+    "all": "npm run fetch:prs && npm run fetch:sessions && npm run analyze && npm run report",
+    "test": "node --test"
+  },
+  "keywords": [
+    "copilot",
+    "coding-agent",
+    "pr-analysis",
+    "mcp-tools",
+    "resources"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "quickchart-js": "^3.1.3"
+  }
+}
