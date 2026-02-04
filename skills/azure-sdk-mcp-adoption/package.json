@@ -5,11 +5,11 @@
   "description": "Copilot agent skill that correlates Azure SDK MCP tool usage with monthly Azure SDK releases",
   "type": "module",
   "scripts": {
-    "run": "node src/run.js",
-    "fetch:telemetry": "node src/fetch-telemetry.js",
-    "fetch:releases": "node src/fetch-releases.js",
-    "correlate": "node src/correlate.js",
-    "report": "node src/report.js",
+    "run": "node scripts/run.js",
+    "fetch:telemetry": "node scripts/fetch-telemetry.js",
+    "fetch:releases": "node scripts/fetch-releases.js",
+    "correlate": "node scripts/correlate.js",
+    "report": "node scripts/report.js",
     "all": "npm run fetch:telemetry && npm run fetch:releases && npm run correlate && npm run report",
     "test": "node --test"
   },

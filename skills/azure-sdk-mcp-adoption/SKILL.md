@@ -10,9 +10,9 @@ Generates reports showing which Azure SDK packages used MCP tools during develop
 ## Quick Start
 
 ```bash
-cd .github/skills/azure-sdk-mcp-adoption
+cd skills/azure-sdk-mcp-adoption
 pnpm install
-node src/run.js
+node scripts/run.js
 ```
 
 **Prerequisites:**
@@ -23,16 +23,16 @@ node src/run.js
 
 ```bash
 # Full pipeline with defaults (current month, 3 months telemetry)
-node src/run.js
+node scripts/run.js
 
 # Custom date range
-node src/run.js --start 2025-12-01 --end 2026-01-17 --month 2026-01
+node scripts/run.js --start 2025-12-01 --end 2026-01-17 --month 2026-01
 
 # Run specific steps
-node src/run.js --step correlate --step report
+node scripts/run.js --step correlate --step report
 
 # Show help
-node src/run.js --help
+node scripts/run.js --help
 ```
 
 ## Pipeline Steps
@@ -70,7 +70,7 @@ Each run creates a timestamped folder in `output/` containing:
 ## File Structure
 
 ```
-src/
+scripts/
 ├── run.js              # Pipeline orchestrator
 ├── fetch-telemetry.js  # Kusto queries
 ├── fetch-releases.js   # GitHub data fetching

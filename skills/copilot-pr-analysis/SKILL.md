@@ -10,9 +10,9 @@ Generates reports analyzing which resources and tools Copilot coding agent uses 
 ## Quick Start
 
 ```bash
-cd .github/skills/copilot-pr-analysis
+cd skills/copilot-pr-analysis
 pnpm install
-node src/run.js --repos Azure/azure-sdk-for-js,Azure/azure-sdk-for-python
+node scripts/run.js --repos Azure/azure-sdk-for-js,Azure/azure-sdk-for-python
 ```
 
 **Prerequisites:**
@@ -24,16 +24,16 @@ node src/run.js --repos Azure/azure-sdk-for-js,Azure/azure-sdk-for-python
 
 ```bash
 # Analyze specific repos
-node src/run.js --repos owner/repo1,owner/repo2
+node scripts/run.js --repos owner/repo1,owner/repo2
 
 # Custom date range
-node src/run.js --repos owner/repo --since 2025-11-01 --stale-days 14
+node scripts/run.js --repos owner/repo --since 2025-11-01 --stale-days 14
 
 # Run specific steps
-node src/run.js --repos owner/repo --step fetch-prs --step analyze
+node scripts/run.js --repos owner/repo --step fetch-prs --step analyze
 
 # Show help
-node src/run.js --help
+node scripts/run.js --help
 ```
 
 ## Pipeline Steps

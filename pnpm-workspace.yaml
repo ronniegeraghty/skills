@@ -1,5 +1,5 @@
 packages:
-  - .github/skills/*
+  - skills/*
 
 ignoredBuiltDependencies:
   - canvas

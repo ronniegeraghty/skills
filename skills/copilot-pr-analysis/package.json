@@ -5,11 +5,11 @@
   "description": "Copilot agent skill that analyzes PR sessions to correlate resource/tool usage with PR outcomes",
   "type": "module",
   "scripts": {
-    "run": "node src/run.js",
-    "fetch:prs": "node src/fetch-prs.js",
-    "fetch:sessions": "node src/fetch-sessions.js",
-    "analyze": "node src/analyze.js",
-    "report": "node src/report.js",
+    "run": "node scripts/run.js",
+    "fetch:prs": "node scripts/fetch-prs.js",
+    "fetch:sessions": "node scripts/fetch-sessions.js",
+    "analyze": "node scripts/analyze.js",
+    "report": "node scripts/report.js",
     "all": "npm run fetch:prs && npm run fetch:sessions && npm run analyze && npm run report",
     "test": "node --test"
   },
