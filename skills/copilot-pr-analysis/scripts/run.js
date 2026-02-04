@@ -115,7 +115,7 @@ function showHelp() {
 Copilot PR Analysis Report Generator
 
 Usage:
-  node src/run.js --repos owner/repo1,owner/repo2 [options]
+  node scripts/run.js --repos owner/repo1,owner/repo2 [options]
 
 Required:
   --repos, -r <repos>    Comma-separated list of repositories to analyze

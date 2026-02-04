@@ -122,7 +122,7 @@ function printHelp() {
   console.log(`
 Azure SDK MCP Adoption Report Generator
 
-Usage: node src/run.js [options]
+Usage: node scripts/run.js [options]
 
 Options:
   --help, -h              Show this help
@@ -136,10 +136,10 @@ Arguments passed to scripts:
 
 Examples:
   # Run full pipeline for January 2026 releases
-  node src/run.js --month 2026-01 --end 2026-01-17
+  node scripts/run.js --month 2026-01 --end 2026-01-17
   
   # Run only correlation and report steps
-  node src/run.js --step correlate --step report
+  node scripts/run.js --step correlate --step report
 `);
 }
 
