@@ -1,6 +1,6 @@
 /**
  * Shared constants for the Azure SDK MCP Adoption skill
- * 
+ *
  * Centralizes configuration values used across multiple modules.
  */
 
@@ -30,16 +30,18 @@ export const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/Azure/azure-sd
  * These correspond to the subdirectories in the azure-sdk releases folder
  */
 export const SUPPORTED_LANGUAGES = [
-  "js",       // JavaScript/TypeScript
-  "python",   // Python
-  "dotnet",   // .NET (C#)
-  "java",     // Java
-  "go",       // Go
-  "cpp",      // C++
-  "c",        // C
-  "ios",      // iOS (Swift/Objective-C)
-  "android"   // Android (Kotlin/Java)
-];
+  "js", // JavaScript/TypeScript
+  "python", // Python
+  "dotnet", // .NET (C#)
+  "java", // Java
+  "go", // Go
+  "cpp", // C++
+  "c", // C
+  "ios", // iOS (Swift/Objective-C)
+  "android", // Android (Kotlin/Java)
+] as const;
+
+export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 // -----------------------------------------------------------------------------
 // Chart Configuration
@@ -49,5 +51,5 @@ export const SUPPORTED_LANGUAGES = [
 export const CHART_CONFIG = {
   width: 600,
   height: 400,
-  backgroundColor: "white"
-};
+  backgroundColor: "white",
+} as const;

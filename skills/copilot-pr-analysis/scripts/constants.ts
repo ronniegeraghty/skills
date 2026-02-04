@@ -1,6 +1,6 @@
 /**
  * Constants for Copilot PR Analysis Skill
- * 
+ *
  * @module constants
  */
 
@@ -28,8 +28,10 @@ export const DEFAULT_SINCE_DAYS = 90;
 export const PR_STATUS = {
   MERGED: "merged",
   ABANDONED: "abandoned",
-  ACTIVE: "active"
-};
+  ACTIVE: "active",
+} as const;
+
+export type PrStatusType = (typeof PR_STATUS)[keyof typeof PR_STATUS];
 
 // -----------------------------------------------------------------------------
 // Resource Patterns
@@ -38,46 +40,46 @@ export const PR_STATUS = {
 /**
  * Patterns to identify instruction/resource files in session logs
  */
-export const RESOURCE_PATTERNS = [
+export const RESOURCE_PATTERNS: RegExp[] = [
   // Copilot instructions
   /\.github\/copilot-instructions\.md/gi,
   /\.copilot\/.*\.md/gi,
   /COPILOT\.md/gi,
-  
+
   // Skills
   /\.github\/skills\/[^/]+\/SKILL\.md/gi,
   /\.github\/skills\/[^/]+/gi,
-  
+
   // MCP configurations
   /\.github\/copilot\/mcp\.json/gi,
   /copilot-mcp\.json/gi,
   /\.mcp\/.*\.json/gi,
-  
+
   // Custom agent definitions
   /\.github\/agents\/.*\.md/gi,
   /\.github\/copilot\/agents\.json/gi,
-  
+
   // General instruction files
   /CONTRIBUTING\.md/gi,
   /README\.md/gi,
   /ARCHITECTURE\.md/gi,
   /\.github\/CODEOWNERS/gi,
-  
+
   // Azure-specific patterns (common in Azure SDK repos)
   /azure\.instructions\.md/gi,
-  /sdk\/[^/]+\/[^/]+\/README\.md/gi
+  /sdk\/[^/]+\/[^/]+\/README\.md/gi,
 ];
 
 /**
  * Categories for grouping resources
  */
-export const RESOURCE_CATEGORIES = {
+export const RESOURCE_CATEGORIES: Record<string, RegExp> = {
   "copilot-instructions": /copilot-instructions|COPILOT\.md|\.copilot\//i,
-  "skills": /\.github\/skills\//i,
+  skills: /\.github\/skills\//i,
   "mcp-config": /mcp\.json|\.mcp\//i,
   "custom-agents": /agents\.json|\.github\/agents\//i,
-  "documentation": /README\.md|CONTRIBUTING\.md|ARCHITECTURE\.md/i,
-  "other": /.*/
+  documentation: /README\.md|CONTRIBUTING\.md|ARCHITECTURE\.md/i,
+  other: /.*/,
 };
 
 // -----------------------------------------------------------------------------
@@ -87,21 +89,21 @@ export const RESOURCE_CATEGORIES = {
 /**
  * Patterns to identify MCP tool calls in session logs
  */
-export const MCP_TOOL_PATTERNS = [
+export const MCP_TOOL_PATTERNS: RegExp[] = [
   // Direct tool call patterns
   /calling\s+tool[:\s]+([a-z_]+)/gi,
   /tool\s*:\s*([a-z_]+)/gi,
   /mcp_([a-z_]+)/gi,
-  
+
   // Tool invocation patterns
   /invok(?:e|ing)\s+(?:tool\s+)?([a-z_]+)/gi,
-  /using\s+tool\s+([a-z_]+)/gi
+  /using\s+tool\s+([a-z_]+)/gi,
 ];
 
 /**
  * Known MCP tool names to look for
  */
-export const KNOWN_MCP_TOOLS = [
+export const KNOWN_MCP_TOOLS: string[] = [
   // GitHub MCP tools
   "github_search_code",
   "github_search_issues",
@@ -110,23 +112,23 @@ export const KNOWN_MCP_TOOLS = [
   "github_list_commits",
   "github_get_issue",
   "github_create_pull_request",
-  
+
   // Azure SDK MCP tools
   "azure_sdk_get_package_info",
   "azure_sdk_list_packages",
   "azure_sdk_search_apis",
   "azure_sdk_get_samples",
-  
+
   // File system tools
   "read_file",
   "write_file",
   "list_directory",
   "search_files",
-  
+
   // Code analysis tools
   "semantic_search",
   "grep_search",
-  "list_code_usages"
+  "list_code_usages",
 ];
 
 // -----------------------------------------------------------------------------
@@ -141,8 +143,8 @@ export const LOG_SECTION_PATTERNS = {
   fileReads: /Reading file:|Opening file:|Loaded file:/gi,
   fileWrites: /Writing file:|Creating file:|Updating file:/gi,
   errors: /\[ERROR\]|\[Error\]|Error:|Failed:/gi,
-  thinking: /\[THINKING\]|Thinking:|Planning:/gi
-};
+  thinking: /\[THINKING\]|Thinking:|Planning:/gi,
+} as const;
 
 // -----------------------------------------------------------------------------
 // Output Configuration
@@ -161,5 +163,5 @@ export const OUTPUT_FILES = {
   SESSIONS: "sessions.json",
   ANALYSIS: "analysis.json",
   REPORT: "report.md",
-  SUMMARY: "summary.json"
-};
+  SUMMARY: "summary.json",
+} as const;

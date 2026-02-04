@@ -5,12 +5,12 @@
   "description": "Copilot agent skill that correlates Azure SDK MCP tool usage with monthly Azure SDK releases",
   "type": "module",
   "scripts": {
-    "run": "node scripts/run.js",
-    "fetch:telemetry": "node scripts/fetch-telemetry.js",
-    "fetch:releases": "node scripts/fetch-releases.js",
-    "correlate": "node scripts/correlate.js",
-    "report": "node scripts/report.js",
-    "all": "npm run fetch:telemetry && npm run fetch:releases && npm run correlate && npm run report",
+    "start": "tsx scripts/run.ts",
+    "fetch:telemetry": "tsx scripts/fetch-telemetry.ts",
+    "fetch:releases": "tsx scripts/fetch-releases.ts",
+    "correlate": "tsx scripts/correlate.ts",
+    "report": "tsx scripts/report.ts",
+    "typecheck": "tsc --noEmit",
     "test": "node --test"
   },
   "keywords": [
@@ -26,5 +26,11 @@
     "azure-kusto-data": "^6.0.0",
     "js-yaml": "^4.1.0",
     "quickchart-js": "^3.1.3"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.0"
   }
 }

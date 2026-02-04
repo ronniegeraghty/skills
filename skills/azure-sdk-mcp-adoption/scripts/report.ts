@@ -1,17 +1,33 @@
 /**
  * Generate Markdown Report from Correlation Data
- * 
+ *
  * Creates a human-readable markdown report with embedded charts (via QuickChart)
  * showing MCP adoption metrics for Azure SDK releases.
- * 
+ *
  * @module report
  */
 
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
-import QuickChart from "quickchart-js";
-import { CHART_CONFIG } from "./constants.js";
-import { getOutputDir, writeOutput, findOutputDirWithFiles } from "./utils.js";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import QuickChartModule from "quickchart-js";
+// Workaround for QuickChart typing issue
+const QuickChart = QuickChartModule as unknown as new () => {
+  setConfig(config: object): void;
+  setWidth(width: number): void;
+  setHeight(height: number): void;
+  setBackgroundColor(color: string): void;
+  getUrl(): string;
+};
+import { CHART_CONFIG } from "./constants.ts";
+import { getOutputDir, writeOutput, findOutputDirWithFiles } from "./utils.ts";
+import type {
+  CorrelationOutput,
+  CorrelatedRelease,
+  LanguageStat,
+  VersionTypeStat,
+  PlaneStat,
+} from "./types.ts";
 
 // -----------------------------------------------------------------------------
 // Chart Generation
@@ -19,11 +35,8 @@ import { getOutputDir, writeOutput, findOutputDirWithFiles } from "./utils.js";
 
 /**
  * Generate a QuickChart URL for embedding in markdown
- * 
- * @param {Object} config - Chart.js configuration object
- * @returns {string} URL to the generated chart image
  */
-function getChartUrl(config) {
+function getChartUrl(config: object): string {
   const chart = new QuickChart();
   chart.setConfig(config);
   chart.setWidth(CHART_CONFIG.width);
@@ -34,36 +47,31 @@ function getChartUrl(config) {
 
 /**
  * Format a number with locale-aware separators
- * @param {number} n - Number to format
- * @returns {string} Formatted number string
  */
-function formatNumber(n) {
+function formatNumber(n: number | undefined): string {
   return n?.toLocaleString() || "0";
 }
 
 /**
  * Generate bar chart showing MCP adoption by programming language
- * 
- * @param {Object[]} byLanguage - Language statistics array
- * @returns {string} Markdown image syntax with chart URL
  */
-function generateLanguageChart(byLanguage) {
+function generateLanguageChart(byLanguage: LanguageStat[]): string {
   const config = {
     type: "bar",
     data: {
-      labels: byLanguage.map(l => l.language.toUpperCase()),
+      labels: byLanguage.map((l) => l.language.toUpperCase()),
       datasets: [
         {
           label: "With MCP Usage",
-          data: byLanguage.map(l => l.withMcp),
-          backgroundColor: "rgba(54, 162, 235, 0.9)"
+          data: byLanguage.map((l) => l.withMcp),
+          backgroundColor: "rgba(54, 162, 235, 0.9)",
         },
         {
           label: "Total Releases",
-          data: byLanguage.map(l => l.total),
-          backgroundColor: "rgba(201, 203, 207, 0.9)"
-        }
-      ]
+          data: byLanguage.map((l) => l.total),
+          backgroundColor: "rgba(201, 203, 207, 0.9)",
+        },
+      ],
     },
     options: {
       plugins: {
@@ -73,40 +81,37 @@ function generateLanguageChart(byLanguage) {
           anchor: "end",
           align: "top",
           color: "#333",
-          font: { weight: "bold" }
-        }
+          font: { weight: "bold" },
+        },
       },
       scales: {
-        y: { beginAtZero: true }
-      }
-    }
+        y: { beginAtZero: true },
+      },
+    },
   };
   return `![MCP Adoption by Language](${getChartUrl(config)})`;
 }
 
 /**
  * Generate bar chart showing MCP adoption by version type (GA/Beta)
- * 
- * @param {Object[]} byVersionType - Version type statistics array
- * @returns {string} Markdown image syntax with chart URL
  */
-function generateVersionTypeChart(byVersionType) {
+function generateVersionTypeChart(byVersionType: VersionTypeStat[]): string {
   const config = {
     type: "bar",
     data: {
-      labels: byVersionType.map(v => v.versionType),
+      labels: byVersionType.map((v) => v.versionType),
       datasets: [
         {
           label: "With MCP Usage",
-          data: byVersionType.map(v => v.withMcp),
-          backgroundColor: "rgba(54, 162, 235, 0.9)"
+          data: byVersionType.map((v) => v.withMcp),
+          backgroundColor: "rgba(54, 162, 235, 0.9)",
         },
         {
           label: "Total Releases",
-          data: byVersionType.map(v => v.total),
-          backgroundColor: "rgba(201, 203, 207, 0.9)"
-        }
-      ]
+          data: byVersionType.map((v) => v.total),
+          backgroundColor: "rgba(201, 203, 207, 0.9)",
+        },
+      ],
     },
     options: {
       plugins: {
@@ -116,38 +121,37 @@ function generateVersionTypeChart(byVersionType) {
           anchor: "end",
           align: "top",
           color: "#333",
-          font: { weight: "bold" }
-        }
+          font: { weight: "bold" },
+        },
       },
       scales: {
-        y: { beginAtZero: true }
-      }
-    }
+        y: { beginAtZero: true },
+      },
+    },
   };
   return `![MCP Adoption by Version Type](${getChartUrl(config)})`;
 }
 
 /**
  * Generate doughnut chart showing releases by plane (Management/Data)
- * 
- * @param {Object[]} byPlane - Plane statistics array
- * @returns {string} Markdown image syntax with chart URL
  */
-function generatePlaneChart(byPlane) {
+function generatePlaneChart(byPlane: PlaneStat[]): string {
   const config = {
     type: "doughnut",
     data: {
-      labels: byPlane.map(p => `${p.plane} (${p.withMcp}/${p.total})`),
-      datasets: [{
-        data: byPlane.map(p => p.total),
-        backgroundColor: ["rgba(54, 162, 235, 0.8)", "rgba(255, 99, 132, 0.8)"]
-      }]
+      labels: byPlane.map((p) => `${p.plane} (${p.withMcp}/${p.total})`),
+      datasets: [
+        {
+          data: byPlane.map((p) => p.total),
+          backgroundColor: ["rgba(54, 162, 235, 0.8)", "rgba(255, 99, 132, 0.8)"],
+        },
+      ],
     },
     options: {
       plugins: {
-        title: { display: true, text: "Releases by Plane" }
-      }
-    }
+        title: { display: true, text: "Releases by Plane" },
+      },
+    },
   };
   return `![Releases by Plane](${getChartUrl(config)})`;
 }
@@ -158,12 +162,17 @@ function generatePlaneChart(byPlane) {
 
 /**
  * Generate the complete markdown report
- * 
- * @param {Object} data - Correlation data including metadata, summary, and releases
- * @returns {string} Complete markdown report
  */
-function generateReport(data) {
-  const { metadata, summary, byLanguage, byVersionType, byPlane, releases, toolSummary, clientSummary } = data;
+function generateReport(data: CorrelationOutput): string {
+  const {
+    metadata,
+    summary,
+    byLanguage,
+    byVersionType,
+    byPlane,
+    releases,
+    toolSummary,
+  } = data;
 
   let md = `# Azure SDK MCP Adoption Report
 
@@ -227,7 +236,7 @@ ${generatePlaneChart(byPlane)}
   }
 
   // Releases with MCP usage - detailed list
-  const withMcp = releases.filter(r => r.hadMcpUsage);
+  const withMcp = releases.filter((r: CorrelatedRelease) => r.hadMcpUsage);
   if (withMcp.length > 0) {
     md += `
 ---
@@ -239,31 +248,38 @@ The following **${withMcp.length}** packages released in ${metadata.releaseMonth
 `;
 
     // Group by language for better organization
-    const byLang = {};
+    const byLang: Record<string, CorrelatedRelease[]> = {};
     for (const r of withMcp) {
       if (!byLang[r.language]) byLang[r.language] = [];
       byLang[r.language].push(r);
     }
 
     // Track client usage across all released packages with MCP
-    const clientPackageCount = new Map();
+    const clientPackageCount = new Map<string, Set<string>>();
 
-    for (const [lang, pkgs] of Object.entries(byLang).sort((a, b) => b[1].length - a[1].length)) {
+    for (const [lang, pkgs] of Object.entries(byLang).sort(
+      (a, b) => b[1].length - a[1].length
+    )) {
       md += `### ${lang.toUpperCase()} (${pkgs.length} packages)\n\n`;
-      
+
       for (const r of pkgs.sort((a, b) => b.mcpCallCount - a.mcpCallCount)) {
-        const allTools = r.mcpToolsUsed.map(t => `\`${t.replace("azsdk_", "")}\``).join(", ");
-        const allClients = r.mcpClientsUsed?.map(c => c.name).filter(Boolean) || [];
+        const allTools = r.mcpToolsUsed
+          .map((t: string) => `\`${t.replace("azsdk_", "")}\``)
+          .join(", ");
+        const allClients =
+          r.mcpClientsUsed
+            ?.map((c: { name: string }) => c.name)
+            .filter(Boolean) || [];
         const uniqueClients = [...new Set(allClients)];
-        
+
         // Track which clients were used for which packages
         for (const client of uniqueClients) {
           if (!clientPackageCount.has(client)) {
             clientPackageCount.set(client, new Set());
           }
-          clientPackageCount.get(client).add(r.packageName);
+          clientPackageCount.get(client)!.add(r.packageName);
         }
-        
+
         md += `**${r.packageName}** v${r.version}\n`;
         md += `- Type: ${r.versionType} | Plane: ${r.plane}\n`;
         md += `- MCP Calls: **${r.mcpCallCount}**\n`;
@@ -278,10 +294,11 @@ The following **${withMcp.length}** packages released in ${metadata.releaseMonth
       md += `Packages that used MCP tools by client (a package may use multiple clients):\n\n`;
       md += `| Client | Packages |\n`;
       md += `|--------|----------|\n`;
-      
-      const sortedClients = [...clientPackageCount.entries()]
-        .sort((a, b) => b[1].size - a[1].size);
-      
+
+      const sortedClients = [...clientPackageCount.entries()].sort(
+        (a, b) => b[1].size - a[1].size
+      );
+
       for (const [client, packages] of sortedClients) {
         md += `| ${client} | ${packages.size} |\n`;
       }
@@ -301,7 +318,8 @@ The following **${withMcp.length}** packages released in ${metadata.releaseMonth
 `;
 
     for (const t of toolSummary.slice(0, 15)) {
-      const icon = t.successRate >= 90 ? "✅" : t.successRate >= 70 ? "⚠️" : "❌";
+      const icon =
+        t.successRate >= 90 ? "✅" : t.successRate >= 70 ? "⚠️" : "❌";
       md += `| ${icon} \`${t.name}\` | ${formatNumber(t.calls)} | ${t.successRate}% | ${t.userCount} | ${t.packageCount} |\n`;
     }
   }
@@ -321,26 +339,24 @@ The following **${withMcp.length}** packages released in ${metadata.releaseMonth
 
 /**
  * Load correlation data from current or previous run
- * 
- * @param {string} outputDir - Current run's output directory
- * @returns {Object} Correlation data
- * @throws {Error} If correlation.json not found
  */
-function loadCorrelationData(outputDir) {
+function loadCorrelationData(outputDir: string): CorrelationOutput {
   const correlationPath = join(outputDir, "correlation.json");
 
   if (existsSync(correlationPath)) {
     return JSON.parse(readFileSync(correlationPath, "utf-8"));
   }
-  
+
   const found = findOutputDirWithFiles(["correlation.json"]);
   if (found?.files) {
     return JSON.parse(readFileSync(found.files["correlation.json"], "utf-8"));
   }
   if (found?.dir) {
-    return JSON.parse(readFileSync(join(found.dir, "correlation.json"), "utf-8"));
+    return JSON.parse(
+      readFileSync(join(found.dir, "correlation.json"), "utf-8")
+    );
   }
-  
+
   throw new Error("correlation.json not found. Run correlate step first.");
 }
 
@@ -351,7 +367,7 @@ function loadCorrelationData(outputDir) {
 /**
  * Main function - generates markdown report from correlation data
  */
-async function main() {
+async function main(): Promise<void> {
   const outputDir = getOutputDir();
   console.log(`Output directory: ${outputDir}`);
   console.log("Loading correlation data...");
@@ -367,12 +383,16 @@ async function main() {
   console.log(`Report written to ${reportPath}`);
 
   // Write summary JSON
-  const summaryPath = writeOutput("summary.json", {
-    ...correlationData.summary,
-    byLanguage: correlationData.byLanguage,
-    byVersionType: correlationData.byVersionType,
-    byPlane: correlationData.byPlane
-  }, outputDir);
+  const summaryPath = writeOutput(
+    "summary.json",
+    {
+      ...correlationData.summary,
+      byLanguage: correlationData.byLanguage,
+      byVersionType: correlationData.byVersionType,
+      byPlane: correlationData.byPlane,
+    },
+    outputDir
+  );
   console.log(`Summary written to ${summaryPath}`);
 
   console.log("\nDone!");

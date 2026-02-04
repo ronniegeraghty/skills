@@ -1,26 +1,53 @@
 ---
 name: template
-description: Template for creating new skills. Copy this folder and customize for your use case.
+description: |
+  **WORKFLOW SKILL** - [One-line description of what the skill does].
+  USE FOR: "trigger phrase 1", "trigger phrase 2", "trigger phrase 3".
+  DO NOT USE FOR: scenario1 (use other-skill), scenario2 (use mcp-tool).
+  INVOKES: `mcp-tool-1`, `mcp-tool-2` for execution.
+  FOR SINGLE OPERATIONS: Use `mcp-tool` directly for simple queries.
 ---
 
-# Template Skill
+# [Skill Title]
 
-Replace this content with your skill instructions.
+## When to Use This Skill
 
-## When to Use
+Activate when user wants to:
+- Specific action 1
+- Specific action 2
+- Specific action 3
 
-Describe when Copilot should use this skill.
+## Prerequisites
 
-## Instructions
+- Required MCP tools: `tool-name`
+- Required permissions: list
+- Required CLI tools: `cli-name`
 
-1. Step one
-2. Step two
-3. Step three
+## MCP Tools Used
+
+| Step | MCP Tool | Command | Purpose |
+|------|----------|---------|---------|  
+| 1 | `tool-name` | `command` | Description |
+
+## Steps
+
+### Step 1: Action Name
+
+**Using MCP (Preferred):**
+Invoke `tool-name` MCP tool:
+- Command: `command_name`
+- Parameters: `param1`, `param2`
+
+**CLI Fallback (if MCP unavailable):**
+```bash
+cli command --option value
+```
 
 ## Examples
 
 Provide examples of inputs and expected outputs.
 
-## Resources
+## Related Skills
 
-Link to any scripts, tools, or references in this skill's directory.
+- For X: `other-skill-name`
+- For Y: `another-skill-name`
