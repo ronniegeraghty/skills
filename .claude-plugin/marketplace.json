@@ -5,18 +5,22 @@
     "email": "rgeraghty@github.com"
   },
   "metadata": {
-    "description": "Skills for AI workflows, Azure SDK analysis, and Copilot PR analysis",
+    "description": "Agent skills for AI workflows, analysis, and automation",
     "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "analysis-skills",
-      "description": "Collection of analysis skills for Azure SDK MCP adoption reporting and Copilot PR session analysis",
+      "name": "rg-skills",
+      "description": "Collection of agent skills for various workflows including analysis, reporting, and media processing",
       "source": "./",
       "strict": false,
       "skills": [
+        "./skills/audio-to-remotion",
         "./skills/azure-sdk-mcp-adoption",
-        "./skills/copilot-pr-analysis"
+        "./skills/copilot-pr-analysis",
+        "./skills/executive-review",
+        "./skills/mgmt-namespace-review",
+        "./skills/sprint-update-memo"
       ]
     }
   ]
