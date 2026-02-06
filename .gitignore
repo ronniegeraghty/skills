@@ -19,4 +19,7 @@ build/
 node_modules/
 
 # Skill outputs (generated assets)
-.github/skills/*/output/
+**/output/
+
+__pycache__/
+*.pyc

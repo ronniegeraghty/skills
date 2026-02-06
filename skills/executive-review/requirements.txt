@@ -1,0 +1,20 @@
+# Executive Review Skill - Python Dependencies
+
+# Transcription
+openai-whisper>=20240930
+
+# Video/Audio Processing
+opencv-python>=4.10.0
+ffmpeg-python>=0.2.0
+
+# Document Processing
+python-pptx>=1.0.2
+python-docx>=1.1.2
+PyMuPDF>=1.25.1
+pdf2image>=1.17.0
+
+# Image Handling
+Pillow>=11.1.0
+
+# Data Models
+pydantic>=2.10.0
