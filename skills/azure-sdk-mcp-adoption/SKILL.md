@@ -1,11 +1,6 @@
 ---
 name: azure-sdk-mcp-adoption
-description: |
-  **ANALYSIS SKILL** - Generate adoption reports correlating Azure SDK MCP tool usage with monthly SDK releases.
-  USE FOR: "MCP adoption report", "SDK tool usage metrics", "Azure SDK adoption analysis", "correlate MCP usage with releases", "generate adoption metrics".
-  DO NOT USE FOR: querying raw telemetry (use Kusto directly), fetching single release data (use GitHub API), general SDK documentation.
-  INVOKES: `scripts/run.js` pipeline with Kusto queries and GitHub API for data collection.
-  FOR SINGLE OPERATIONS: Use Azure CLI or GitHub CLI directly for one-off queries.
+description: "Generate adoption reports correlating Azure SDK MCP tool usage with monthly SDK releases. Use for MCP adoption metrics and SDK tool usage analysis."
 ---
 
 # Azure SDK MCP Adoption Report

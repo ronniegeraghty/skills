@@ -1,13 +1,6 @@
 ---
 name: executive-review
-description: |
-  **WORKFLOW SKILL** - Analyze demo videos, meeting recordings, documents, and presentations through executive personas to anticipate questions, concerns, and follow-ups.
-  
-  USE FOR: "review my demo", "what would a CTO ask about this", "executive feedback on presentation", "analyze this video for leadership", "prepare for exec review", "anticipate executive questions".
-  
-  DO NOT USE FOR: simple transcription only (use whisper directly), document summarization without exec lens (use a summarizer), editing content (use editor tools).
-  
-  INVOKES: Python scripts for transcription (whisper), frame extraction (opencv/ffmpeg), document parsing (python-pptx, PyMuPDF, python-docx).
+description: "Analyze demo videos, meeting recordings, documents, and presentations through executive personas to anticipate questions, concerns, and follow-ups. Use for exec review prep and anticipating leadership questions."
 ---
 
 # Executive Review

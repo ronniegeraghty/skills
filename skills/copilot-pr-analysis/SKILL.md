@@ -1,11 +1,6 @@
 ---
 name: copilot-pr-analysis
-description: |
-  **ANALYSIS SKILL** - Analyze Copilot coding agent PR sessions to correlate resources and MCP tools with PR outcomes (merged vs abandoned).
-  USE FOR: "analyze Copilot PRs", "PR success factors", "Copilot session analysis", "which skills help PRs merge", "Copilot adoption insights".
-  DO NOT USE FOR: creating PRs (use GitHub CLI), managing Copilot settings, single PR review (use GitHub web UI).
-  INVOKES: `scripts/run.js` pipeline with GitHub CLI for PR/session data collection.
-  FOR SINGLE OPERATIONS: Use `gh pr list` or GitHub API directly for one-off queries.
+description: "Analyze Copilot coding agent PR sessions to correlate resources and MCP tools with PR outcomes (merged vs abandoned). Use for PR success factors and Copilot adoption insights."
 ---
 
 # Copilot PR Analysis Skill

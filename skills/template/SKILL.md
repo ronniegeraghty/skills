@@ -1,11 +1,6 @@
 ---
 name: template
-description: |
-  **WORKFLOW SKILL** - [One-line description of what the skill does].
-  USE FOR: "trigger phrase 1", "trigger phrase 2", "trigger phrase 3".
-  DO NOT USE FOR: scenario1 (use other-skill), scenario2 (use mcp-tool).
-  INVOKES: `mcp-tool-1`, `mcp-tool-2` for execution.
-  FOR SINGLE OPERATIONS: Use `mcp-tool` directly for simple queries.
+description: "[One-line description of what the skill does and when to use it]"
 ---
 
 # [Skill Title]

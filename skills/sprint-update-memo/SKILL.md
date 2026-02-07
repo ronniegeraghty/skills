@@ -1,13 +1,6 @@
 ---
 name: sprint-update-memo
-description: |
-  **WORKFLOW SKILL** - Generate Sprint update memos for the AzSDK Tools Agent Inner Loop project.
-  USE FOR: "write sprint update", "generate sprint memo", "sprint report", "sprint summary", 
-  "create sprint update", "what happened this sprint", "sprint status report".
-  DO NOT USE FOR: viewing individual issues (use gh CLI directly), updating issue status 
-  (use gh CLI), creating new issues (use gh CLI).
-  INVOKES: GitHub CLI (`gh`) for project data retrieval.
-  FOR SINGLE OPERATIONS: Use `gh project item-list` or `gh api graphql` directly for quick queries.
+description: "Generate Sprint update memos for the AzSDK Tools Agent Inner Loop project. Use for sprint updates, reports, summaries, and status reports. Invokes GitHub CLI for project data retrieval."
 ---
 
 # Sprint Update Memo Skill

@@ -1,10 +1,6 @@
 ---
 name: audio-to-remotion
-description: |
-  Create Remotion videos from audio or video files with automatic transcription and optional captions.
-  USE FOR: "create video from audio", "transcribe to remotion", "audio to video with captions", "podcast visualization", "MP3 to video".
-  DO NOT USE FOR: editing existing Remotion projects (use remotion-best-practices), video conversion only (use ffmpeg).
-  REQUIRES: remotion-best-practices skill for Remotion patterns.
+description: "Create Remotion videos from audio or video files with automatic transcription and optional captions. Requires remotion-best-practices skill for Remotion patterns."
 ---
 
 # Audio to Remotion

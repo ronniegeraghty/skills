@@ -1,11 +1,6 @@
 ---
 name: mgmt-namespace-review
-description: |
-  **WORKFLOW SKILL** - Orchestrates the Azure SDK Management Plane Namespace Review process.
-  USE FOR: "update namespace reviews", "process mgmt namespace reviews", "check namespace review status", "mgmt plane review", "run namespace review workflow".
-  DO NOT USE FOR: creating new namespace review issues (manual), individual GitHub operations (use gh CLI directly), single email queries (use Outlook).
-  INVOKES: `scripts/run.ts` pipeline with GitHub CLI and Microsoft Graph API.
-  FOR SINGLE OPERATIONS: Use `gh issue` or `gh project` commands directly.
+description: "Orchestrates the Azure SDK Management Plane Namespace Review process. Use for updating, processing, or checking namespace review status. Invokes GitHub CLI and Microsoft Graph API."
 ---
 
 # MGMT Plane Namespace Review Workflow
