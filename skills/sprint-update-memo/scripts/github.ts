@@ -3,7 +3,7 @@
  * GitHub CLI wrapper for GraphQL queries.
  */
 
-import { execSync, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import { GITHUB_ORG, PROJECT_NUMBER } from "./constants.ts";
 import { logError, logInfo } from "./utils.ts";
 
@@ -16,8 +16,25 @@ import { logError, logInfo } from "./utils.ts";
  */
 export function checkGhAuth(): boolean {
   try {
-    execSync("gh auth status", { stdio: "pipe" });
-    return true;
+    const result = spawnSync("gh", ["auth", "status"], { 
+      encoding: "utf8", 
+      stdio: "pipe" 
+    });
+    
+    // Check stdout and stderr for success indicators
+    const output = (result.stdout || "") + (result.stderr || "");
+    
+    // If output contains "Logged in" or "Active account: true", we're authenticated
+    if (output.includes("Logged in") || output.includes("Active account: true")) {
+      return true;
+    }
+    
+    // If exit code is 0, we're authenticated
+    if (result.status === 0) {
+      return true;
+    }
+    
+    return false;
   } catch {
     return false;
   }
@@ -25,10 +42,25 @@ export function checkGhAuth(): boolean {
 
 /**
  * Check if GitHub CLI has the required project scope.
+ * Handles rate limiting by checking stderr for throttling messages.
  */
 export function checkProjectScope(): boolean {
   try {
-    // Try a simple project query to check scope
+    // First check token scopes directly instead of making API call
+    const statusResult = spawnSync("gh", ["auth", "status"], {
+      encoding: "utf8",
+      stdio: "pipe",
+    });
+    
+    const output = statusResult.stdout + statusResult.stderr;
+    
+    // Check if read:project scope is present
+    if (output.includes("read:project")) {
+      return true;
+    }
+    
+    // If we can't determine from token scopes, try a simple query
+    // but only if not rate limited
     const result = spawnSync(
       "gh",
       [
@@ -39,6 +71,15 @@ export function checkProjectScope(): boolean {
       ],
       { encoding: "utf8", stdio: "pipe" }
     );
+    
+    // Check for rate limiting
+    const stderr = result.stderr || "";
+    if (stderr.includes("throttled") || stderr.includes("429")) {
+      // Rate limited - assume scope is OK if auth succeeded
+      logInfo("Rate limited, assuming project scope is OK");
+      return true;
+    }
+    
     return result.status === 0;
   } catch {
     return false;
@@ -72,7 +113,17 @@ export function verifyAuth(): void {
 // -----------------------------------------------------------------------------
 
 /**
- * Execute a GraphQL query using GitHub CLI.
+ * Sleep for a given number of milliseconds.
+ */
+function sleep(ms: number): void {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    // Busy wait - not ideal but works synchronously
+  }
+}
+
+/**
+ * Execute a GraphQL query using GitHub CLI with retry logic for rate limiting.
  * @param query GraphQL query string
  * @param variables Optional query variables
  * @returns Parsed JSON response
@@ -92,21 +143,39 @@ export function executeGraphQL<T>(
     }
   }
 
-  const result = spawnSync("gh", args, {
-    encoding: "utf8",
-    maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large responses
-  });
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const result = spawnSync("gh", args, {
+      encoding: "utf8",
+      maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large responses
+    });
 
-  if (result.status !== 0) {
+    if (result.status === 0) {
+      try {
+        return JSON.parse(result.stdout) as T;
+      } catch {
+        throw new Error(`Failed to parse GraphQL response: ${result.stdout}`);
+      }
+    }
+
     const errorMessage = result.stderr || result.stdout || "Unknown error";
+    
+    // Check if rate limited
+    if (errorMessage.includes("throttled") || errorMessage.includes("429")) {
+      const waitTime = Math.pow(2, attempt + 1) * 5000; // 10s, 20s, 40s
+      console.log(`  Rate limited, waiting ${waitTime / 1000}s before retry...`);
+      sleep(waitTime);
+      lastError = new Error(`GraphQL query failed: ${errorMessage}`);
+      continue;
+    }
+
+    // Not a rate limit error, fail immediately
     throw new Error(`GraphQL query failed: ${errorMessage}`);
   }
 
-  try {
-    return JSON.parse(result.stdout) as T;
-  } catch {
-    throw new Error(`Failed to parse GraphQL response: ${result.stdout}`);
-  }
+  throw lastError || new Error("GraphQL query failed after retries");
 }
 
 // -----------------------------------------------------------------------------

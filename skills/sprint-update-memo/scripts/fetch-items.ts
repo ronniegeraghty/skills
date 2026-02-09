@@ -13,7 +13,7 @@
  *   NEXT_SPRINT - Next Sprint title for "Next Steps" section
  */
 
-import { executeGraphQL, ITEMS_QUERY, verifyAuth } from "./github.ts";
+import { executeGraphQL, ITEMS_QUERY } from "./github.ts";
 import type {
   IssueComment,
   LinkedPullRequest,
@@ -142,8 +142,7 @@ function transformItem(raw: RawProjectItem): ProjectItem | null {
 export async function fetchItems(): Promise<ItemsOutput> {
   logSection("Fetching Project Items");
 
-  // Verify authentication
-  verifyAuth();
+  // Auth already verified in fetch-sprints step
 
   // Read sprints data to determine target Sprints
   let targetSprintTitle: string;

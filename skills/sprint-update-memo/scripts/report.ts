@@ -458,8 +458,6 @@ function generateExecutiveSummary(
     completedItems,
     inProgressItems,
     blockedItems,
-    startDate,
-    endDate
   } = analysis;
 
   const paragraphs: string[] = [];
@@ -467,14 +465,14 @@ function generateExecutiveSummary(
   // -------------------------------------------------------------------------
   // Paragraph 1: Sprint Overview and Status
   // -------------------------------------------------------------------------
-  let p1 = `Sprint ${sprintNumber} ran from ${formatDateRange(startDate, endDate)}. `;
+  let p1 = "";
   
   if (ragStatus === "Green") {
-    p1 += `The team delivered strong results, completing ${stats.totalDone} work items representing ${completionPercentage}% of the planned scope. `;
+    p1 = `The team delivered strong results in Sprint ${sprintNumber}, completing ${stats.totalDone} work items representing ${completionPercentage}% of the planned scope. `;
   } else if (ragStatus === "Yellow") {
-    p1 += `The team made steady progress, completing ${stats.totalDone} work items representing ${completionPercentage}% of the planned scope. `;
+    p1 = `The team made steady progress in Sprint ${sprintNumber}, completing ${stats.totalDone} work items representing ${completionPercentage}% of the planned scope. `;
   } else {
-    p1 += `The team faced challenges during this Sprint, completing ${stats.totalDone} work items representing ${completionPercentage}% of the planned scope. `;
+    p1 = `The team faced challenges in Sprint ${sprintNumber}, completing ${stats.totalDone} work items representing ${completionPercentage}% of the planned scope. `;
   }
   
   if (stats.bugBashCount > 0) {
@@ -542,18 +540,6 @@ function generateExecutiveSummary(
   paragraphs.push(p5);
 
   return paragraphs;
-}
-
-/**
- * Format a date range for display.
- */
-function formatDateRange(startDate: string, endDate: string): string {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const options: Intl.DateTimeFormatOptions = { month: "long", day: "numeric" };
-  const startStr = start.toLocaleDateString("en-US", options);
-  const endStr = end.toLocaleDateString("en-US", { ...options, year: "numeric" });
-  return `${startStr} to ${endStr}`;
 }
 
 /**

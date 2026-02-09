@@ -105,6 +105,44 @@ output/AzSDK-Tools-Agent-Sprint-[N]-Update.md
 5. **Risks & Mitigations** - Table of risks, impacts, and mitigations
 6. **Next Steps** - Planned work for next Sprint
 
+## Writing Style Guidelines
+
+Follow these guidelines to ensure the memo reads as a polished, professional document rather than raw notes.
+
+### Executive Summary
+- Write as **3-4 flowing paragraphs**, not titled sections with "**Title:** content" format
+- **Do not include specific numeric stats** like "completed 28 of 36 items" — keep it qualitative
+- Introduce demo videos naturally in the text, e.g., "To showcase where we are, the team recorded a [demo video](link) that walks through..."
+- Group related topics together rather than giving each its own titled section
+- Focus on **why accomplishments matter**, not just what was done
+- Link to key issues when mentioning specific work items
+
+### RAG Status
+- Keep it brief — a single sentence explaining the status is sufficient
+- Mention key milestones achieved as justification
+- Avoid bullet points; use flowing prose
+
+### Value Delivered
+- Be specific about what improvements were made
+- Avoid vague statements like "Enhanced general experience with 2 improvements"
+- Instead, write: "SDK generation workflow is now more reliable with git worktree support and centralized tsp-client execution"
+
+### Next Steps
+- List actual work items, not just counts like "14 items planned"
+- Group by category and include links to issues
+- Mark items already in progress
+
+### General
+- Avoid raw data dumps or note-like formatting
+- Write for an executive audience who wants to understand impact, not implementation details
+- Use consistent emoji and formatting throughout
+
+## Sample Memos
+
+See the [samples/](./samples/) directory for example memos that follow these guidelines.
+
+- [Sprint 12 Update](./samples/Sprint-12-Update.md) - Example of a well-formatted Sprint update memo
+
 ### Status Emojis
 | Status | Display |
 |--------|---------|
