@@ -1,0 +1,30 @@
+{
+  "name": "@skills/sprint-update-memo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generate Sprint update memos for the AzSDK Tools Agent Inner Loop project",
+  "type": "module",
+  "scripts": {
+    "start": "tsx scripts/run.ts",
+    "fetch:sprints": "tsx scripts/fetch-sprints.ts",
+    "fetch:items": "tsx scripts/fetch-items.ts",
+    "analyze": "tsx scripts/analyze.ts",
+    "report": "tsx scripts/report.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
+  },
+  "keywords": [
+    "sprint",
+    "update",
+    "memo",
+    "github-project",
+    "azure-sdk"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.0"
+  }
+}

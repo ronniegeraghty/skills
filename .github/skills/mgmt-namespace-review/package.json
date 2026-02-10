@@ -1,0 +1,34 @@
+{
+  "name": "@skills/mgmt-namespace-review",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Workflow skill that automates the Azure SDK Management Plane Namespace Review process",
+  "type": "module",
+  "scripts": {
+    "start": "tsx scripts/run.ts",
+    "start:dry": "tsx scripts/run.ts --dry-run",
+    "fetch": "tsx scripts/fetch-issues.ts",
+    "validate": "tsx scripts/validate.ts",
+    "process": "tsx scripts/process.ts",
+    "report": "tsx scripts/report.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
+  },
+  "keywords": [
+    "azure-sdk",
+    "mgmt-plane",
+    "namespace-review",
+    "workflow"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@azure/identity": "^4.0.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.0"
+  }
+}

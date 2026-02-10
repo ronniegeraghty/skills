@@ -1,0 +1,43 @@
+[project]
+name = "executive-review"
+version = "0.1.0"
+description = "Analyze videos, audio, documents, and presentations through executive personas to anticipate questions and concerns"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ronnie Geraghty" }]
+keywords = ["ai", "executive", "review", "transcription", "analysis"]
+
+dependencies = [
+    "openai-whisper>=20240930",
+    "opencv-python>=4.10.0",
+    "ffmpeg-python>=0.2.0",
+    "python-pptx>=1.0.2",
+    "python-docx>=1.1.2",
+    "PyMuPDF>=1.25.1",
+    "pdf2image>=1.17.0",
+    "Pillow>=11.1.0",
+    "pydantic>=2.10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0.0", "black>=23.0.0", "mypy>=1.0.0"]
+
+[project.scripts]
+executive-review = "scripts.run:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true

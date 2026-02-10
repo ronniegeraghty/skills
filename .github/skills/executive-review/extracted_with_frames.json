@@ -1,0 +1,555 @@
+{
+  "file_name": "AzSDK-Tools-Agent-Demo-short.mp4",
+  "file_path": "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short.mp4",
+  "content_type": "video",
+  "extracted_at": "2026-02-05T15:21:27.567827",
+  "text": "Hello folks, my name is Ronnie Garry, and today I'll be demoing the Azure SDK tools agent. The Azure SDK is exposed complex behaviors like retries, authentication, long-running operations, polling and pagination, ever-handling and distributed tracing, and our SDK guidelines to find consistent proven implementations for all of them. Those guidelines don't just enforce consistency across Azure. They also ensure each SDK feels idiomatic in its language. Rust should feel like Rust, Python like Python, and .NET like .NET, while still behaving the same at a platform level. These aren't optional conveniences. They're critical for reliability and for helping customers build production-grade apps that behave the same no matter which Azure service they're using. And because customers often use multiple service libraries together, it's essential that the SDKs feel cohesive, the same patterns, same authentication flows, same error shapes, the same quality bar, even as each language remains idiomatic. That's the standard we hold ourselves in service teams too, and it's why we're building tooling that makes it trivial for teams to meet that standard, not work around it. We're building toward a world where updating a TypeSpec API and generating the corresponding service libraries is a single workflow, not a multi-repo multi-language tour, one click or one prompt. The Azure SDK tools agent helps service teams shape their TypeSpec updates, so it aligns with Azure guidelines, then uses the same change to generate SDKs, open the PRs for them, and get everything to green in CI. One workflow, one click or prompt, fully valid API specs and SDKs. That's the North Star, and today I'm going to show how close we already are. In this demo, I'll show how a service like the Health Data AI service can use the Azure SDK tools agent to easily add features such as skew support to its API spec and corresponding SDK libraries. I'll start off with the agent stocks, which are located at aka.ms.azstk-agent. These contain information on how to install the agent, configure it, as well as some example prompts for completing certain scenarios. If I scroll down a bit, I can also see a sample prompt for the entire end-to-end workflow. I'll start by copying this and bringing it into VS Code, where I'll customize it for our demo. Now I'm in VS Code with the Azure REST API specs repo opened. I've copied that sample end-to-end workflow prompt into my chat, and I've updated the goal at the bottom to match my goal, which is to add skew support. I want to add a free, basic, and standard skew, and I've also pointed the agent where my TypeSpec project is located in the repo. Let's send it off to the agent now. You can see immediately 14 files have been referenced. These are instructions files that make a part of our agent. They contain information on the entire process, all the way from API spec updates to releasing SDKs. The agent knows we're working on Azure API specs, so it wants to reference the TypeSpec Azure docs to learn about common types it can use. Looks like the agent found the resource skew property from our common types, that it will use to make the updates. The agent has also created a progress markdown file, which we can monitor to watch its progress. The agent has updated our main TSP file to add our skew support feature. It's also updated the client TSP file to add specific language customizations where the naming in the spec doesn't match our language guidelines. Now it wants to run the first of its MCP tools, the AZS DK run TypeSpec validation. This will make sure that our TypeSpec project still compiles. The agent successfully validated our TypeSpec project. It then updated our progress tracker and committed the changes it made. Now it's ready to create a pull request. The agent successfully created its pull request. It then retrieved information on that pull request to give us the link but also check its CI. It's seeing that some of the linked open API files need to be regenerated, which it'll work on now. The agent successfully regenerated our dependent open API specs and pushed up those commits. It's updated our progress tracker and is now ready to move on to SDK generation. First, it'll use the AZS DK Verify setup tool from our MCP server. This will make sure we have all the necessary tools installed locally to work on these language SDKs. Now that the agent has verified our environment, it's going to use another tool from its MCP server. The AZ SDK Package Generate Code, the generate our first library starting with that net. The generation for the dot net library has finished and we can see that it was successful. Now the agent is going to use another tool to build our code. It's now successfully building and it's going to move on to running our tests. The agent is now done running our tests and it's moving on to updating our change log content. Now that change log contents updated, it's going to move on to updating metadata files like solution files. Now the agent is going to move on to running our AZS DK Package Run Check tool. This will run all other checks like formatters, linters, and any language specific checks we have. The agent has now finished successfully running all of their checks. Now it's ready to move on to the Python library. We'll jump ahead to when the agent is done generating the libraries for the other languages and validating them because the process is similar to what we just saw. Coming back, we see the agent has successfully generated, built, tested, and validated the remaining language libraries. Some going off without a hitch and some requiring a few tweaks by the agent. Now it's getting ready to commit all those changes and create pull requests for each library. Now the agent has successfully committed its changes to our SDK libraries and created pull requests for them. If we scroll down to the bottom we can see the agent has provided us with the summary of what it's accomplished. It's given us a link to our PR for the API specs repo and the links to the PRs for all the language SDK repos. Now we're ready to move on to getting our SDKs approved and released. We've just seen the end to end workflow from updating a services API spec and validating those changes to generating and validating SDK libraries across all tier 1 languages all in under two hours. And those aren't active hours. It's only a few minutes to set up the agent and let it start running. Then I can step away and work on other things while the agent completes the workflow. We're already hearing from service teams that you suspend one full week going through the end to end process for a single SDK language. Now accomplish that for all five languages including publishing to package managers in a fraction of that time. Thanks for watching and stay tuned. There's a lot more interesting stuff coming to the Azure SDK tools agent.",
+  "duration_seconds": 342.84263,
+  "language": "en",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 4.96,
+      "text": "Hello folks, my name is Ronnie Garry, and today I'll be demoing the Azure SDK tools agent."
+    },
+    {
+      "start": 4.96,
+      "end": 10.18,
+      "text": "The Azure SDK is exposed complex behaviors like retries, authentication, long-running operations,"
+    },
+    {
+      "start": 10.18,
+      "end": 14.780000000000001,
+      "text": "polling and pagination, ever-handling and distributed tracing, and our SDK guidelines to find"
+    },
+    {
+      "start": 14.780000000000001,
+      "end": 17.72,
+      "text": "consistent proven implementations for all of them."
+    },
+    {
+      "start": 17.72,
+      "end": 20.66,
+      "text": "Those guidelines don't just enforce consistency across Azure."
+    },
+    {
+      "start": 20.66,
+      "end": 23.98,
+      "text": "They also ensure each SDK feels idiomatic in its language."
+    },
+    {
+      "start": 23.98,
+      "end": 27.98,
+      "text": "Rust should feel like Rust, Python like Python, and .NET like .NET, while still behaving"
+    },
+    {
+      "start": 27.98,
+      "end": 29.96,
+      "text": "the same at a platform level."
+    },
+    {
+      "start": 29.96,
+      "end": 31.54,
+      "text": "These aren't optional conveniences."
+    },
+    {
+      "start": 31.54,
+      "end": 35.14,
+      "text": "They're critical for reliability and for helping customers build production-grade apps that"
+    },
+    {
+      "start": 35.14,
+      "end": 38.36,
+      "text": "behave the same no matter which Azure service they're using."
+    },
+    {
+      "start": 38.36,
+      "end": 41.980000000000004,
+      "text": "And because customers often use multiple service libraries together, it's essential that"
+    },
+    {
+      "start": 41.980000000000004,
+      "end": 46.72,
+      "text": "the SDKs feel cohesive, the same patterns, same authentication flows, same error shapes,"
+    },
+    {
+      "start": 46.72,
+      "end": 50.78,
+      "text": "the same quality bar, even as each language remains idiomatic."
+    },
+    {
+      "start": 50.78,
+      "end": 54.0,
+      "text": "That's the standard we hold ourselves in service teams too, and it's why we're building"
+    },
+    {
+      "start": 54.0,
+      "end": 58.46,
+      "text": "tooling that makes it trivial for teams to meet that standard, not work around it."
+    },
+    {
+      "start": 58.480000000000004,
+      "end": 62.22,
+      "text": "We're building toward a world where updating a TypeSpec API and generating the corresponding"
+    },
+    {
+      "start": 62.22,
+      "end": 66.9,
+      "text": "service libraries is a single workflow, not a multi-repo multi-language tour, one click"
+    },
+    {
+      "start": 66.9,
+      "end": 68.3,
+      "text": "or one prompt."
+    },
+    {
+      "start": 68.3,
+      "end": 72.46000000000001,
+      "text": "The Azure SDK tools agent helps service teams shape their TypeSpec updates, so it aligns"
+    },
+    {
+      "start": 72.46000000000001,
+      "end": 77.34,
+      "text": "with Azure guidelines, then uses the same change to generate SDKs, open the PRs for them,"
+    },
+    {
+      "start": 77.34,
+      "end": 79.86,
+      "text": "and get everything to green in CI."
+    },
+    {
+      "start": 79.86,
+      "end": 84.42,
+      "text": "One workflow, one click or prompt, fully valid API specs and SDKs."
+    },
+    {
+      "start": 84.42,
+      "end": 88.02000000000001,
+      "text": "That's the North Star, and today I'm going to show how close we already are."
+    },
+    {
+      "start": 88.02,
+      "end": 91.94,
+      "text": "In this demo, I'll show how a service like the Health Data AI service can use the Azure"
+    },
+    {
+      "start": 91.94,
+      "end": 97.53999999999999,
+      "text": "SDK tools agent to easily add features such as skew support to its API spec and corresponding"
+    },
+    {
+      "start": 97.53999999999999,
+      "end": 98.53999999999999,
+      "text": "SDK libraries."
+    },
+    {
+      "start": 98.53999999999999,
+      "end": 105.22,
+      "text": "I'll start off with the agent stocks, which are located at aka.ms.azstk-agent."
+    },
+    {
+      "start": 105.22,
+      "end": 109.06,
+      "text": "These contain information on how to install the agent, configure it, as well as some example"
+    },
+    {
+      "start": 109.06,
+      "end": 111.17999999999999,
+      "text": "prompts for completing certain scenarios."
+    },
+    {
+      "start": 111.17999999999999,
+      "end": 114.86,
+      "text": "If I scroll down a bit, I can also see a sample prompt for the entire end-to-end workflow."
+    },
+    {
+      "start": 114.86,
+      "end": 118.66,
+      "text": "I'll start by copying this and bringing it into VS Code, where I'll customize it for"
+    },
+    {
+      "start": 118.66,
+      "end": 119.66,
+      "text": "our demo."
+    },
+    {
+      "start": 119.66,
+      "end": 122.42,
+      "text": "Now I'm in VS Code with the Azure REST API specs repo opened."
+    },
+    {
+      "start": 122.42,
+      "end": 126.53999999999999,
+      "text": "I've copied that sample end-to-end workflow prompt into my chat, and I've updated the"
+    },
+    {
+      "start": 126.53999999999999,
+      "end": 129.86,
+      "text": "goal at the bottom to match my goal, which is to add skew support."
+    },
+    {
+      "start": 129.86,
+      "end": 133.78,
+      "text": "I want to add a free, basic, and standard skew, and I've also pointed the agent where my"
+    },
+    {
+      "start": 133.78,
+      "end": 136.5,
+      "text": "TypeSpec project is located in the repo."
+    },
+    {
+      "start": 136.5,
+      "end": 137.82,
+      "text": "Let's send it off to the agent now."
+    },
+    {
+      "start": 137.82,
+      "end": 140.46,
+      "text": "You can see immediately 14 files have been referenced."
+    },
+    {
+      "start": 140.46,
+      "end": 143.06,
+      "text": "These are instructions files that make a part of our agent."
+    },
+    {
+      "start": 143.06,
+      "end": 147.7,
+      "text": "They contain information on the entire process, all the way from API spec updates to releasing"
+    },
+    {
+      "start": 147.7,
+      "end": 149.38,
+      "text": "SDKs."
+    },
+    {
+      "start": 149.38,
+      "end": 153.02,
+      "text": "The agent knows we're working on Azure API specs, so it wants to reference the TypeSpec"
+    },
+    {
+      "start": 153.02,
+      "end": 156.38,
+      "text": "Azure docs to learn about common types it can use."
+    },
+    {
+      "start": 156.38,
+      "end": 159.34,
+      "text": "Looks like the agent found the resource skew property from our common types, that it"
+    },
+    {
+      "start": 159.34,
+      "end": 161.54,
+      "text": "will use to make the updates."
+    },
+    {
+      "start": 161.54,
+      "end": 166.3,
+      "text": "The agent has also created a progress markdown file, which we can monitor to watch its progress."
+    },
+    {
+      "start": 166.3,
+      "end": 169.9,
+      "text": "The agent has updated our main TSP file to add our skew support feature."
+    },
+    {
+      "start": 169.9,
+      "end": 173.78,
+      "text": "It's also updated the client TSP file to add specific language customizations where"
+    },
+    {
+      "start": 173.78,
+      "end": 176.54000000000002,
+      "text": "the naming in the spec doesn't match our language guidelines."
+    },
+    {
+      "start": 176.54000000000002,
+      "end": 180.94,
+      "text": "Now it wants to run the first of its MCP tools, the AZS DK run TypeSpec validation."
+    },
+    {
+      "start": 180.94,
+      "end": 183.70000000000002,
+      "text": "This will make sure that our TypeSpec project still compiles."
+    },
+    {
+      "start": 183.70000000000002,
+      "end": 186.5,
+      "text": "The agent successfully validated our TypeSpec project."
+    },
+    {
+      "start": 186.5,
+      "end": 189.86,
+      "text": "It then updated our progress tracker and committed the changes it made."
+    },
+    {
+      "start": 189.86,
+      "end": 192.54000000000002,
+      "text": "Now it's ready to create a pull request."
+    },
+    {
+      "start": 192.54000000000002,
+      "end": 194.78,
+      "text": "The agent successfully created its pull request."
+    },
+    {
+      "start": 194.78,
+      "end": 197.9,
+      "text": "It then retrieved information on that pull request to give us the link but also check"
+    },
+    {
+      "start": 197.9,
+      "end": 198.9,
+      "text": "its CI."
+    },
+    {
+      "start": 198.9,
+      "end": 202.94,
+      "text": "It's seeing that some of the linked open API files need to be regenerated, which it'll"
+    },
+    {
+      "start": 202.94,
+      "end": 204.74,
+      "text": "work on now."
+    },
+    {
+      "start": 204.74,
+      "end": 209.5,
+      "text": "The agent successfully regenerated our dependent open API specs and pushed up those commits."
+    },
+    {
+      "start": 209.5,
+      "end": 213.5,
+      "text": "It's updated our progress tracker and is now ready to move on to SDK generation."
+    },
+    {
+      "start": 213.5,
+      "end": 217.78,
+      "text": "First, it'll use the AZS DK Verify setup tool from our MCP server."
+    },
+    {
+      "start": 217.78,
+      "end": 221.1,
+      "text": "This will make sure we have all the necessary tools installed locally to work on these language"
+    },
+    {
+      "start": 221.1,
+      "end": 222.1,
+      "text": "SDKs."
+    },
+    {
+      "start": 222.1,
+      "end": 225.74,
+      "text": "Now that the agent has verified our environment, it's going to use another tool from its"
+    },
+    {
+      "start": 225.74,
+      "end": 226.9,
+      "text": "MCP server."
+    },
+    {
+      "start": 226.9,
+      "end": 232.02,
+      "text": "The AZ SDK Package Generate Code, the generate our first library starting with that net."
+    },
+    {
+      "start": 232.02,
+      "end": 236.86,
+      "text": "The generation for the dot net library has finished and we can see that it was successful."
+    },
+    {
+      "start": 236.86,
+      "end": 239.98000000000002,
+      "text": "Now the agent is going to use another tool to build our code."
+    },
+    {
+      "start": 239.98000000000002,
+      "end": 245.02,
+      "text": "It's now successfully building and it's going to move on to running our tests."
+    },
+    {
+      "start": 245.02,
+      "end": 248.18,
+      "text": "The agent is now done running our tests and it's moving on to updating our change log"
+    },
+    {
+      "start": 248.18,
+      "end": 250.42000000000002,
+      "text": "content."
+    },
+    {
+      "start": 250.42000000000002,
+      "end": 253.82,
+      "text": "Now that change log contents updated, it's going to move on to updating metadata files"
+    },
+    {
+      "start": 253.82,
+      "end": 255.58,
+      "text": "like solution files."
+    },
+    {
+      "start": 255.58,
+      "end": 259.06,
+      "text": "Now the agent is going to move on to running our AZS DK Package Run Check tool."
+    },
+    {
+      "start": 259.06,
+      "end": 262.66,
+      "text": "This will run all other checks like formatters, linters, and any language specific checks"
+    },
+    {
+      "start": 262.66,
+      "end": 265.3,
+      "text": "we have."
+    },
+    {
+      "start": 265.3,
+      "end": 268.42,
+      "text": "The agent has now finished successfully running all of their checks."
+    },
+    {
+      "start": 268.42,
+      "end": 270.90000000000003,
+      "text": "Now it's ready to move on to the Python library."
+    },
+    {
+      "start": 270.90000000000003,
+      "end": 274.1,
+      "text": "We'll jump ahead to when the agent is done generating the libraries for the other languages"
+    },
+    {
+      "start": 274.1,
+      "end": 277.7,
+      "text": "and validating them because the process is similar to what we just saw."
+    },
+    {
+      "start": 277.7,
+      "end": 281.46000000000004,
+      "text": "Coming back, we see the agent has successfully generated, built, tested, and validated"
+    },
+    {
+      "start": 281.46000000000004,
+      "end": 283.38,
+      "text": "the remaining language libraries."
+    },
+    {
+      "start": 283.38,
+      "end": 287.18,
+      "text": "Some going off without a hitch and some requiring a few tweaks by the agent."
+    },
+    {
+      "start": 287.18,
+      "end": 291.9,
+      "text": "Now it's getting ready to commit all those changes and create pull requests for each library."
+    },
+    {
+      "start": 291.9,
+      "end": 295.74,
+      "text": "Now the agent has successfully committed its changes to our SDK libraries and created"
+    },
+    {
+      "start": 295.74,
+      "end": 297.5,
+      "text": "pull requests for them."
+    },
+    {
+      "start": 297.5,
+      "end": 300.74,
+      "text": "If we scroll down to the bottom we can see the agent has provided us with the summary"
+    },
+    {
+      "start": 300.74,
+      "end": 301.74,
+      "text": "of what it's accomplished."
+    },
+    {
+      "start": 301.74,
+      "end": 306.5,
+      "text": "It's given us a link to our PR for the API specs repo and the links to the PRs for all"
+    },
+    {
+      "start": 306.5,
+      "end": 308.38,
+      "text": "the language SDK repos."
+    },
+    {
+      "start": 308.38,
+      "end": 311.58,
+      "text": "Now we're ready to move on to getting our SDKs approved and released."
+    },
+    {
+      "start": 311.58,
+      "end": 315.06,
+      "text": "We've just seen the end to end workflow from updating a services API spec and validating"
+    },
+    {
+      "start": 315.06,
+      "end": 319.26,
+      "text": "those changes to generating and validating SDK libraries across all tier 1 languages"
+    },
+    {
+      "start": 319.26,
+      "end": 320.65999999999997,
+      "text": "all in under two hours."
+    },
+    {
+      "start": 320.65999999999997,
+      "end": 321.82,
+      "text": "And those aren't active hours."
+    },
+    {
+      "start": 321.82,
+      "end": 324.38,
+      "text": "It's only a few minutes to set up the agent and let it start running."
+    },
+    {
+      "start": 324.38,
+      "end": 327.34,
+      "text": "Then I can step away and work on other things while the agent completes the workflow."
+    },
+    {
+      "start": 327.34,
+      "end": 330.53999999999996,
+      "text": "We're already hearing from service teams that you suspend one full week going through the"
+    },
+    {
+      "start": 330.53999999999996,
+      "end": 333.14,
+      "text": "end to end process for a single SDK language."
+    },
+    {
+      "start": 333.14,
+      "end": 337.26,
+      "text": "Now accomplish that for all five languages including publishing to package managers in"
+    },
+    {
+      "start": 337.26,
+      "end": 338.94,
+      "text": "a fraction of that time."
+    },
+    {
+      "start": 338.94,
+      "end": 339.94,
+      "text": "Thanks for watching and stay tuned."
+    },
+    {
+      "start": 339.94,
+      "end": 342.62,
+      "text": "There's a lot more interesting stuff coming to the Azure SDK tools agent."
+    }
+  ],
+  "image_paths": [
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0000_00m00s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0001_00m30s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0002_01m00s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0003_01m30s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0004_02m00s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0005_02m30s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0006_03m00s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0007_03m30s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0008_04m00s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0009_04m30s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0010_05m00s.jpg",
+    "C:\\Users\\rgeraghty\\Downloads\\AzSDK-Tools-Agent-Demo-short_extracted\\frames\\frame_0011_05m30s.jpg"
+  ]
+}
